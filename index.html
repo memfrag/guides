@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guides</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>Guides</h1>
+    <p class="subtitle">Coding guides and architecture documents.</p>
+  </header>
+  <main>
+    <ul class="guide-list" id="guide-list"></ul>
+  </main>
+  <footer>
+    <a href="https://github.com/memfrag/guides">Source on GitHub</a>
+  </footer>
+
+  <script>
+    fetch('guides.json')
+      .then(res => res.json())
+      .then(guides => {
+        const list = document.getElementById('guide-list');
+        guides
+          .slice()
+          .sort((a, b) => (b.updated || '').localeCompare(a.updated || ''))
+          .forEach(guide => {
+            const li = document.createElement('li');
+            const tags = (guide.tags || [])
+              .map(t => `<span class="tag">${t}</span>`)
+              .join('');
+            li.innerHTML = `
+              <a href="${guide.path}">${guide.title}</a>
+              <p class="desc">${guide.description || ''}</p>
+              <p class="meta">${tags}${guide.updated ? `<span>Updated ${guide.updated}</span>` : ''}</p>
+            `;
+            list.appendChild(li);
+          });
+      })
+      .catch(err => {
+        document.getElementById('guide-list').innerHTML =
+          '<li>Could not load guides.json</li>';
+        console.error(err);
+      });
+  </script>
+</body>
+</html>

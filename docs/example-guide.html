@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Example Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <main>
+    <a class="back-link" href="../index.html">&larr; All guides</a>
+    <h1>Example Guide</h1>
+    <p class="subtitle">A starter template for new guides.</p>
+
+    <h2>Structure</h2>
+    <p>
+      Each guide is a standalone HTML page under <code>docs/</code>, styled with the
+      shared stylesheet at <code>assets/style.css</code>. Copy this file as a
+      starting point for a new guide.
+    </p>
+
+    <h2>Adding a new guide</h2>
+    <ol>
+      <li>Create <code>docs/your-guide.html</code>, copying this file's structure.</li>
+      <li>Add an entry to <code>guides.json</code> at the repo root with a title,
+        description, and path.</li>
+      <li>Commit and push &mdash; the index page picks it up automatically.</li>
+    </ol>
+
+    <h2>Code example</h2>
+    <pre><code>function example() {
+  return "hello, guides";
+}</code></pre>
+  </main>
+</body>
+</html>

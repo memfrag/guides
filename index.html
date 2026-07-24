@@ -4,44 +4,83 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Guides</title>
+  <meta name="description" content="Coding guides and architecture documents.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <header class="page-header">
-    <h1>Guides</h1>
-    <p class="subtitle">Coding guides and architecture documents.</p>
+  <header class="masthead">
+    <p class="eyebrow">Field notes on building things</p>
+    <h1>Guides<span class="dot">.</span></h1>
+    <p class="subtitle">Coding guides and architecture documents &mdash; each one a standalone page you can read start to finish.</p>
+    <p class="masthead-rule"><span id="guide-count">Index</span></p>
   </header>
+
   <main>
-    <ul class="guide-list" id="guide-list"></ul>
+    <ul class="guide-list" id="guide-list">
+      <li class="list-note" id="list-note">Loading&hellip;</li>
+    </ul>
   </main>
-  <footer>
+
+  <footer class="page-footer">
+    <span>memfrag</span>
+    <span class="sep"></span>
     <a href="https://github.com/memfrag/guides">Source on GitHub</a>
   </footer>
 
   <script>
+    const esc = s => String(s).replace(/[&<>"]/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
+    ));
+
     fetch('guides.json')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+        return res.json();
+      })
       .then(guides => {
         const list = document.getElementById('guide-list');
-        guides
+        const note = document.getElementById('list-note');
+        const sorted = guides
           .slice()
-          .sort((a, b) => (b.updated || '').localeCompare(a.updated || ''))
-          .forEach(guide => {
-            const li = document.createElement('li');
-            const tags = (guide.tags || [])
-              .map(t => `<span class="tag">${t}</span>`)
-              .join('');
-            li.innerHTML = `
-              <a href="${guide.path}">${guide.title}</a>
-              <p class="desc">${guide.description || ''}</p>
-              <p class="meta">${tags}${guide.updated ? `<span>Updated ${guide.updated}</span>` : ''}</p>
-            `;
-            list.appendChild(li);
-          });
+          .sort((a, b) => (b.updated || '').localeCompare(a.updated || ''));
+
+        note.remove();
+
+        if (!sorted.length) {
+          list.innerHTML = '<li class="list-note">No guides yet.</li>';
+          return;
+        }
+
+        document.getElementById('guide-count').textContent =
+          'Index — ' + sorted.length + (sorted.length === 1 ? ' guide' : ' guides');
+
+        list.innerHTML = sorted.map((guide, i) => {
+          const num = String(i + 1).padStart(2, '0');
+          const tags = (guide.tags || [])
+            .map(t => `<span class="tag">${esc(t)}</span>`)
+            .join('');
+          return `
+            <li class="entry" style="--i:${i}">
+              <a class="entry-link" href="${esc(guide.path)}">
+                <span class="entry-num">${num}</span>
+                <span class="entry-body">
+                  <span class="entry-title">${esc(guide.title)}</span>
+                  ${guide.description ? `<span class="entry-desc">${esc(guide.description)}</span>` : ''}
+                  ${tags ? `<span class="entry-tags">${tags}</span>` : ''}
+                </span>
+                <span class="entry-side">
+                  ${guide.updated ? `<time datetime="${esc(guide.updated)}">${esc(guide.updated)}</time>` : ''}
+                  <span class="entry-arrow" aria-hidden="true">&rarr;</span>
+                </span>
+              </a>
+            </li>`;
+        }).join('');
       })
       .catch(err => {
         document.getElementById('guide-list').innerHTML =
-          '<li>Could not load guides.json</li>';
+          '<li class="list-note is-error">Could not load guides.json</li>';
         console.error(err);
       });
   </script>

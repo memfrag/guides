@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iOS 26 SwiftUI Toolbars and Liquid Glass</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f5ef;
+      --paper: rgba(255,255,255,.78);
+      --paper-strong: rgba(255,255,255,.92);
+      --ink: #1b1b20;
+      --muted: #63606d;
+      --line: rgba(29,29,34,.13);
+      --accent: #007a87;
+      --accent-2: #b6462a;
+      --accent-3: #445c9f;
+      --green: #2b7b51;
+      --shadow: 0 24px 70px rgba(44, 39, 25, .14);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #171719;
+        --paper: rgba(37,38,43,.76);
+        --paper-strong: rgba(43,44,50,.92);
+        --ink: #f3f0ea;
+        --muted: #b7b2aa;
+        --line: rgba(255,255,255,.15);
+        --accent: #62d0d8;
+        --accent-2: #ff9a75;
+        --accent-3: #9fb1ff;
+        --green: #79d69c;
+        --shadow: 0 24px 70px rgba(0,0,0,.34);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 6%, rgba(0,122,135,.18), transparent 28rem),
+        radial-gradient(circle at 86% 14%, rgba(182,70,42,.16), transparent 24rem),
+        linear-gradient(135deg, var(--bg), color-mix(in srgb, var(--bg) 84%, #ffffff));
+      line-height: 1.55;
+    }
+
+    a { color: var(--accent); text-decoration-thickness: .08em; text-underline-offset: .18em; }
+    code, pre { font-family: var(--mono); }
+    code {
+      padding: .12rem .32rem;
+      border: 1px solid var(--line);
+      border-radius: .45rem;
+      background: color-mix(in srgb, var(--paper-strong) 74%, transparent);
+      font-size: .92em;
+    }
+    pre {
+      margin: 1rem 0 0;
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #15161a;
+      color: #f5f1e8;
+      font-size: .87rem;
+      line-height: 1.48;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    pre code { padding: 0; border: 0; background: transparent; color: inherit; }
+
+    .wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      margin-top: 1.6rem;
+      font-size: .82rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .18s ease, gap .18s ease;
+    }
+    .back-link:hover { color: var(--accent); gap: .75rem; }
+    .hero {
+      min-height: 92vh;
+      display: grid;
+      align-items: center;
+      padding: 5rem 0 3rem;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap: clamp(2rem, 5vw, 5rem);
+      align-items: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      gap: .55rem;
+      align-items: center;
+      padding: .42rem .72rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      backdrop-filter: blur(22px) saturate(1.2);
+      box-shadow: 0 8px 24px rgba(0,0,0,.06);
+      color: var(--muted);
+      font-size: .86rem;
+      font-weight: 650;
+    }
+    h1 {
+      margin: 1.1rem 0 1rem;
+      max-width: 12ch;
+      font-size: clamp(3rem, 8vw, 7.6rem);
+      line-height: .9;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 66ch;
+      margin: 0;
+      font-size: clamp(1.08rem, 2vw, 1.35rem);
+      color: var(--muted);
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.8rem; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      min-height: 44px;
+      padding: .78rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--ink);
+      color: var(--bg);
+      font-weight: 750;
+      text-decoration: none;
+    }
+    .button.secondary { background: var(--paper); color: var(--ink); backdrop-filter: blur(18px); }
+
+    .device {
+      position: relative;
+      border: 1px solid rgba(255,255,255,.45);
+      border-radius: 42px;
+      padding: 14px;
+      background: linear-gradient(145deg, rgba(255,255,255,.5), rgba(255,255,255,.12));
+      box-shadow: var(--shadow);
+    }
+    .screen {
+      border-radius: 30px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,.12);
+      background:
+        linear-gradient(rgba(255,255,255,.72), rgba(255,255,255,.18)),
+        repeating-linear-gradient(0deg, rgba(27,27,32,.08) 0 1px, transparent 1px 68px),
+        linear-gradient(135deg, #e9f2ef, #f8eadf 48%, #e8ebfb);
+      min-height: 560px;
+      position: relative;
+    }
+    .status { height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 0 28px; font-size: .78rem; font-weight: 800; }
+    .nav-demo { position: sticky; top: 0; padding: 8px 12px 12px; display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+    .nav-title { margin-right: auto; margin-left: 8px; font-weight: 800; font-size: 1.15rem; }
+    .glass {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      min-height: 40px;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.55);
+      background: linear-gradient(135deg, rgba(255,255,255,.82), rgba(255,255,255,.34));
+      box-shadow: 0 12px 30px rgba(32,44,55,.14), inset 0 1px 0 rgba(255,255,255,.82);
+      backdrop-filter: blur(24px) saturate(1.5);
+    }
+    .tool {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      color: #182126;
+      font-weight: 900;
+      font-size: .88rem;
+    }
+    .content-bars { padding: 78px 22px 22px; display: grid; gap: 12px; }
+    .fake-row { height: 54px; border-radius: 14px; background: rgba(255,255,255,.58); border: 1px solid rgba(255,255,255,.7); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 2rem;
+      align-items: start;
+      padding: 1rem 0 5rem;
+    }
+    .toc {
+      position: sticky;
+      top: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1rem;
+      background: var(--paper);
+      backdrop-filter: blur(22px) saturate(1.2);
+      box-shadow: 0 14px 38px rgba(0,0,0,.08);
+    }
+    .toc strong { display: block; margin-bottom: .55rem; }
+    .toc a { display: block; padding: .45rem .3rem; color: var(--muted); text-decoration: none; border-radius: 8px; font-size: .94rem; }
+    .toc a:hover { color: var(--ink); background: rgba(128,128,128,.1); }
+
+    main { display: grid; gap: 1.25rem; }
+    section, .panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: clamp(1.1rem, 3vw, 2rem);
+      background: var(--paper);
+      backdrop-filter: blur(22px) saturate(1.1);
+      box-shadow: 0 16px 50px rgba(0,0,0,.07);
+    }
+    h2 { margin: 0 0 .75rem; font-size: clamp(1.55rem, 3vw, 2.3rem); line-height: 1.08; letter-spacing: 0; }
+    h3 { margin: 1.25rem 0 .45rem; font-size: 1.08rem; }
+    p { margin: .7rem 0; color: var(--muted); }
+    ul, ol { padding-left: 1.25rem; color: var(--muted); }
+    li { margin: .36rem 0; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .callout {
+      border-radius: 16px;
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+      padding: 1rem;
+      background: color-mix(in srgb, var(--accent) 10%, var(--paper-strong));
+    }
+    .callout strong { color: var(--ink); }
+    .tagline {
+      display: inline-block;
+      margin: .3rem 0 .8rem;
+      color: var(--accent);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: .78rem;
+      letter-spacing: .08em;
+    }
+    .diagram {
+      width: 100%;
+      height: auto;
+      margin-top: 1rem;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--paper-strong) 75%, transparent);
+    }
+    .mini-label { font: 700 14px var(--sans); fill: #243034; }
+    .mini-muted { font: 600 12px var(--sans); fill: #677173; }
+    .source-list a { display: inline-block; margin-right: .7rem; margin-bottom: .45rem; }
+
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .65rem;
+      padding: 0;
+      list-style: none;
+    }
+    .checklist li {
+      margin: 0;
+      padding: .75rem .85rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper-strong);
+      color: var(--ink);
+    }
+    .checklist li::before { content: "✓"; color: var(--green); font-weight: 900; margin-right: .45rem; }
+    .footer { padding: 3rem 0 4rem; color: var(--muted); text-align: center; }
+
+    @media (max-width: 880px) {
+      .hero { min-height: auto; padding-top: 2.5rem; }
+      .hero-grid, .layout, .grid-2 { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .screen { min-height: 460px; }
+      .checklist { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .toc, .hero-actions { display: none; }
+      .layout, .hero-grid { display: block; }
+      section, .panel { box-shadow: none; break-inside: avoid; }
+      a { color: #000; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back-link" href="../index.html"><span aria-hidden="true">&larr;</span> All guides</a>
+  </div>
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">SwiftUI · iOS 26 · Liquid Glass</span>
+        <h1>Toolbars That Group by Meaning</h1>
+        <p class="lead">A practical guide to the new iOS 26 toolbar behavior: shared glass backgrounds, spacers, semantic placements, overflow, and how to make a grocery app toolbar feel intentional instead of crowded.</p>
+        <div class="hero-actions">
+          <a class="button" href="#recommended">Jump to Recommended Code</a>
+          <a class="button secondary" href="#checklist">Testing Checklist</a>
+        </div>
+      </div>
+
+      <div class="device" aria-label="Illustration of an iPhone toolbar with separate Liquid Glass groups">
+        <div class="screen">
+          <div class="status"><span>9:41</span><span>5G 100%</span></div>
+          <div class="nav-demo">
+            <div class="nav-title">Products</div>
+            <div class="glass"><span class="tool">≡</span></div>
+            <div class="glass"><span class="tool">＋</span><span class="tool">▦</span></div>
+            <div class="glass"><span class="tool">⇅</span></div>
+          </div>
+          <div class="content-bars" aria-hidden="true">
+            <div class="fake-row"></div>
+            <div class="fake-row"></div>
+            <div class="fake-row"></div>
+            <div class="fake-row"></div>
+            <div class="fake-row"></div>
+            <div class="fake-row"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap layout">
+    <nav class="toc" aria-label="Table of contents">
+      <strong>Contents</strong>
+      <a href="#why">Why Items Share Glass</a>
+      <a href="#spacers">ToolbarSpacer</a>
+      <a href="#grouping">Grouping Diagrams</a>
+      <a href="#code">SwiftUI Examples</a>
+      <a href="#recommended">Recommended Product Toolbar</a>
+      <a href="#design">Design Guidance</a>
+      <a href="#uikit">UIKit Notes</a>
+      <a href="#checklist">Accessibility and Testing</a>
+      <a href="#sources">Sources</a>
+    </nav>
+
+    <main>
+      <section id="why">
+        <span class="tagline">The headline behavior</span>
+        <h2>Why Do Toolbar Items Share One Liquid Glass Background?</h2>
+        <p>In iOS 26, SwiftUI toolbar items are not guaranteed to receive one independent capsule per <code>ToolbarItem</code>. In navigation bars and some other toolbar contexts, the system gives items a glass background that can be shared with other items in the same logical grouping.</p>
+        <p>That grouping is influenced by placement, proximity, explicit <code>ToolbarItemGroup</code> declarations, spacers, and APIs that hide or show shared backgrounds. The system is trying to communicate relationships, not merely draw a border around every declaration in code.</p>
+        <div class="callout">
+          <strong>Good rule:</strong> group controls by meaning. If two actions are part of the same job, sharing one glass surface is helpful. If they start different workflows, give them visual separation.
+        </div>
+      </section>
+
+      <section id="spacers">
+        <span class="tagline">The separator</span>
+        <h2>Use <code>ToolbarSpacer</code> for Visual Breaks</h2>
+        <p><code>ToolbarSpacer</code> is the iOS 26 SwiftUI tool for creating visual breaks in a toolbar. Fixed spacers create standard separation; flexible spacers expand and push items apart.</p>
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Fixed Spacer</h3>
+            <p>Use when controls should remain near each other but live on separate glass surfaces.</p>
+            <pre><code>ToolbarSpacer(.fixed, placement: .topBarTrailing)</code></pre>
+          </div>
+          <div class="panel">
+            <h3>Flexible Spacer</h3>
+            <p>Use when you want available toolbar space to separate groups more dramatically.</p>
+            <pre><code>ToolbarSpacer(.flexible)</code></pre>
+          </div>
+        </div>
+        <p>When the surrounding items use <code>.topBarTrailing</code>, match the spacer placement explicitly. That makes the grouping intent clearer to SwiftUI and clearer to future readers of the code.</p>
+      </section>
+
+      <section id="grouping">
+        <span class="tagline">Diagrams</span>
+        <h2>How Grouping Reads Visually</h2>
+        <p>These examples show how the same actions can feel different depending on grouping. The right answer is the one that matches the user’s mental model.</p>
+
+        <svg class="diagram" viewBox="0 0 920 360" role="img" aria-labelledby="diagram-title">
+          <title id="diagram-title">Toolbar grouping diagrams</title>
+          <defs>
+            <linearGradient id="glassA" x1="0" x2="1">
+              <stop offset="0" stop-color="#ffffff" stop-opacity=".88"/>
+              <stop offset="1" stop-color="#dff7f7" stop-opacity=".42"/>
+            </linearGradient>
+            <filter id="softShadow" x="-20%" y="-50%" width="140%" height="200%">
+              <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#23333a" flood-opacity=".16"/>
+            </filter>
+          </defs>
+
+          <rect width="920" height="360" rx="22" fill="#eef2ef"/>
+          <text x="38" y="48" class="mini-label">One large group</text>
+          <text x="38" y="72" class="mini-muted">All actions look equally related.</text>
+          <rect x="38" y="94" width="404" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <circle cx="78" cy="125" r="22" fill="#fff" opacity=".75"/><text x="72" y="131" class="mini-label">F</text>
+          <circle cx="138" cy="125" r="22" fill="#fff" opacity=".75"/><text x="132" y="131" class="mini-label">+</text>
+          <circle cx="198" cy="125" r="22" fill="#fff" opacity=".75"/><text x="191" y="131" class="mini-label">S</text>
+          <circle cx="258" cy="125" r="22" fill="#fff" opacity=".75"/><text x="251" y="131" class="mini-label">T</text>
+
+          <text x="38" y="218" class="mini-label">Grouped by purpose</text>
+          <text x="38" y="242" class="mini-muted">Filter, create, and transfer read as separate jobs.</text>
+          <rect x="38" y="264" width="62" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <text x="63" y="301" class="mini-label">F</text>
+          <rect x="128" y="264" width="124" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <text x="160" y="301" class="mini-label">+</text><text x="210" y="301" class="mini-label">S</text>
+          <rect x="280" y="264" width="62" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <text x="305" y="301" class="mini-label">T</text>
+
+          <text x="512" y="48" class="mini-label">Every item isolated</text>
+          <text x="512" y="72" class="mini-muted">Useful sometimes, but can become visually noisy.</text>
+          <rect x="512" y="94" width="62" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <rect x="604" y="94" width="62" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <rect x="696" y="94" width="62" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <rect x="788" y="94" width="62" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <text x="537" y="131" class="mini-label">F</text><text x="629" y="131" class="mini-label">+</text><text x="721" y="131" class="mini-label">S</text><text x="813" y="131" class="mini-label">T</text>
+
+          <text x="512" y="218" class="mini-label">Compact add menu</text>
+          <text x="512" y="242" class="mini-muted">Best when horizontal space is tight.</text>
+          <rect x="512" y="264" width="62" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <text x="537" y="301" class="mini-label">F</text>
+          <rect x="604" y="264" width="108" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <text x="631" y="301" class="mini-label">Add</text><text x="681" y="301" class="mini-label">⌄</text>
+          <rect x="742" y="264" width="92" height="62" rx="31" fill="url(#glassA)" stroke="#fff" filter="url(#softShadow)"/>
+          <text x="766" y="301" class="mini-label">More</text>
+        </svg>
+      </section>
+
+      <section id="code">
+        <span class="tagline">SwiftUI</span>
+        <h2>Code Examples</h2>
+        <h3>Original Shape, With Explicit Spacer Placement</h3>
+        <pre><code>.toolbar {
+    ToolbarItem(placement: .topBarTrailing) {
+        filterButton
+    }
+
+    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+
+    ToolbarItemGroup(placement: .topBarTrailing) {
+        Button("Add Product...", systemImage: "plus") {
+            router.presentSheet(.addProduct)
+        }
+
+        Button {
+            router.presentSheet(.scanner(.registry))
+        } label: {
+            Label("Scan Products", systemImage: "barcode.viewfinder")
+        }
+    }
+
+    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+
+    ToolbarItem(placement: .topBarTrailing) {
+        transferMenu
+    }
+}</code></pre>
+
+        <h3>Every Item on Its Own Surface</h3>
+        <pre><code>.toolbar {
+    ToolbarItem(placement: .topBarTrailing) { filterButton }
+    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+    ToolbarItem(placement: .topBarTrailing) { addButton }
+    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+    ToolbarItem(placement: .topBarTrailing) { scanButton }
+    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+    ToolbarItem(placement: .topBarTrailing) { transferMenu }
+}</code></pre>
+
+        <h3>Opting Out of a Shared Background</h3>
+        <pre><code>.toolbar {
+    ToolbarItem(placement: .topBarTrailing) {
+        Button("Help", systemImage: "questionmark.circle") {
+            showHelp()
+        }
+    }
+    .sharedBackgroundVisibility(.hidden)
+}</code></pre>
+        <p>Use <code>sharedBackgroundVisibility(.hidden)</code> carefully. It can be useful for a special control, but <code>ToolbarSpacer(.fixed)</code> is usually the better expression when you simply need separate groups.</p>
+      </section>
+
+      <section id="recommended">
+        <span class="tagline">Grocery app recommendation</span>
+        <h2>Recommended Product Toolbar</h2>
+        <p>For a grocery product registry, these actions form three concepts: filtering, creating products, and transferring or managing products. Add and Scan belong together because both create product entries.</p>
+        <div class="callout">
+          <strong>Recommended visual structure:</strong>
+          <code>[ Filter ]   [ Add | Scan ]   [ Transfer ]</code>
+        </div>
+        <pre><code>@ToolbarContentBuilder
+private var productToolbar: some ToolbarContent {
+    ToolbarItem(placement: .topBarTrailing) {
+        filterButton
+    }
+
+    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+
+    ToolbarItemGroup(placement: .topBarTrailing) {
+        Button("Add Product...", systemImage: "plus") {
+            router.presentSheet(.addProduct)
+        }
+
+        Button {
+            router.presentSheet(.scanner(.registry))
+        } label: {
+            Label("Scan Products", systemImage: "barcode.viewfinder")
+        }
+    }
+
+    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+
+    ToolbarItem(placement: .topBarTrailing) {
+        transferMenu
+    }
+}</code></pre>
+
+        <h3>Compact Alternative</h3>
+        <p>If space gets tight on iPhone, combine creation methods into a menu and keep scanning one tap deeper.</p>
+        <pre><code>ToolbarItem(placement: .topBarTrailing) {
+    Menu("Add Product", systemImage: "plus") {
+        Button("Add Manually...", systemImage: "square.and.pencil") {
+            router.presentSheet(.addProduct)
+        }
+
+        Button("Scan Barcode", systemImage: "barcode.viewfinder") {
+            router.presentSheet(.scanner(.registry))
+        }
+    }
+}</code></pre>
+      </section>
+
+      <section id="design">
+        <span class="tagline">Design judgment</span>
+        <h2>Liquid Glass Design Guidance</h2>
+        <div class="grid-2">
+          <div>
+            <h3>Do</h3>
+            <ul>
+              <li>Use standard <code>Button</code>, <code>Menu</code>, <code>ToolbarItem</code>, and <code>ToolbarItemGroup</code>.</li>
+              <li>Prefer semantic placements such as <code>.confirmationAction</code> and <code>.cancellationAction</code> when they fit.</li>
+              <li>Keep meaningful labels even when the toolbar currently shows only icons.</li>
+              <li>Use badges for real counts or states, such as selected filters or pending uploads.</li>
+              <li>Test over real scrolled content, photos, dark mode, and accessibility settings.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Avoid</h3>
+            <ul>
+              <li>Forcing every icon into a separate capsule when the actions are related.</li>
+              <li>Putting unrelated actions into one large shared surface.</li>
+              <li>Applying <code>glassEffect()</code> to normal toolbar controls that already receive system styling.</li>
+              <li>Keeping old opaque toolbar backgrounds unless they serve a deliberate design need.</li>
+              <li>Assuming all toolbar items will remain visible; overflow is adaptive.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="uikit">
+        <span class="tagline">UIKit equivalent</span>
+        <h2>UIKit Notes</h2>
+        <p>UIKit bar button items also participate in shared backgrounds. <code>UIBarButtonItem</code> includes <code>sharesBackground</code>, which indicates whether an item can share a background with neighboring items in a navigation bar or toolbar.</p>
+        <pre><code>let filterItem = UIBarButtonItem(
+    image: UIImage(systemName: "line.3.horizontal.decrease"),
+    primaryAction: UIAction { _ in showFilters() }
+)
+
+filterItem.sharesBackground = false</code></pre>
+        <p>This does not override grouping when the item belongs to a multi-item <code>UIBarButtonItemGroup</code>. For SwiftUI-first screens, prefer the SwiftUI grouping APIs unless you are already managing UIKit navigation items directly.</p>
+      </section>
+
+      <section id="checklist">
+        <span class="tagline">Verification</span>
+        <h2>Accessibility and Testing Checklist</h2>
+        <ul class="checklist">
+          <li>Light mode</li>
+          <li>Dark mode</li>
+          <li>Increased Contrast</li>
+          <li>Reduce Transparency</li>
+          <li>Reduce Motion</li>
+          <li>Large accessibility text sizes</li>
+          <li>Landscape orientation</li>
+          <li>Narrow iPad windows</li>
+          <li>Long localized button titles</li>
+          <li>Scrolled and unscrolled content</li>
+          <li>Toolbar overflow behavior</li>
+          <li>VoiceOver labels for icon-only actions</li>
+          <li>Destructive actions separated from common actions</li>
+          <li>Menus and sheets originate from the expected control</li>
+        </ul>
+      </section>
+
+      <section id="sources">
+        <span class="tagline">References</span>
+        <h2>Apple Documentation</h2>
+        <p>These are the primary documentation pages used to ground the API notes in this guide.</p>
+        <p class="source-list">
+          <a href="https://developer.apple.com/documentation/SwiftUI/ToolbarSpacer">ToolbarSpacer</a>
+          <a href="https://developer.apple.com/documentation/swiftui/toolbarcontent/sharedbackgroundvisibility%28_%3A%29">sharedBackgroundVisibility</a>
+          <a href="https://developer.apple.com/documentation/swiftui/toolbaritemplacement">ToolbarItemPlacement</a>
+          <a href="https://developer.apple.com/documentation/uikit/uibarbuttonitem/sharesbackground">UIBarButtonItem sharesBackground</a>
+          <a href="https://developer.apple.com/documentation/SwiftUI/Toolbars">SwiftUI Toolbars</a>
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer wrap">
+    Built as a self-contained guide: inline CSS, inline SVG, no external dependencies.
+  </footer>
+</body>
+</html>

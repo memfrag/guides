@@ -1,5 +1,12 @@
 [
   {
+    "title": "iOS 26 SwiftUI Toolbars and Liquid Glass",
+    "path": "docs/liquid-glass-toolbar-guide.html",
+    "description": "Why toolbar items share one Liquid Glass background, and how to use spacers, semantic placements and overflow to group them by meaning instead of by accident.",
+    "tags": ["swiftui", "toolbars", "ios 26"],
+    "updated": "2026-07-24"
+  },
+  {
     "title": "SwiftUI Alignment & Alignment Guides",
     "path": "docs/swiftui-alignment.html",
     "description": "How alignment actually works in SwiftUI — guides as numbers, stacks vs. frames, leading vs. left, baselines, grids, custom guides, anchors, matchedGeometryEffect, and the Layout protocol.",

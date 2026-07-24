@@ -74,6 +74,25 @@
     }
     pre code { padding: 0; border: 0; background: transparent; color: inherit; }
 
+    /* Swift syntax colours. The code block is dark in both themes, so these
+       are fixed values rather than theme tokens. */
+    pre {
+      --tok-comment: #7f838f;
+      --tok-keyword: #ff9a75;
+      --tok-string:  #8fd0a3;
+      --tok-type:    #62d0d8;
+      --tok-member:  #9fb1ff;
+      --tok-number:  #f0c674;
+      --tok-attr:    #ffc9a8;
+    }
+    .tok-comment { color: var(--tok-comment); font-style: italic; }
+    .tok-keyword { color: var(--tok-keyword); }
+    .tok-string  { color: var(--tok-string); }
+    .tok-type    { color: var(--tok-type); }
+    .tok-member  { color: var(--tok-member); }
+    .tok-number  { color: var(--tok-number); }
+    .tok-attr    { color: var(--tok-attr); }
+
     .wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
 
     .back-link {
@@ -607,5 +626,56 @@ filterItem.sharesBackground = false</code></pre>
   <footer class="footer wrap">
     Built as a self-contained guide: inline CSS, inline SVG, no external dependencies.
   </footer>
+  <script>
+  /* Minimal Swift highlighter — no dependencies, runs over each <pre><code>. */
+  (function () {
+    var KEYWORDS = [
+      "actor", "any", "as", "associatedtype", "async", "await", "borrowing", "break",
+      "case", "catch", "class", "consuming", "continue", "convenience", "default",
+      "defer", "deinit", "didSet", "distributed", "do", "dynamic", "each", "else",
+      "enum", "extension", "fallthrough", "false", "fileprivate", "final", "for",
+      "func", "get", "guard", "if", "import", "in", "indirect", "init", "inout",
+      "internal", "is", "isolated", "lazy", "let", "macro", "mutating", "nil",
+      "nonisolated", "nonmutating", "open", "operator", "optional", "override",
+      "package", "precedencegroup", "private", "protocol", "public", "repeat",
+      "required", "rethrows", "return", "self", "set", "some", "static", "struct",
+      "subscript", "super", "switch", "throw", "throws", "true", "try", "typealias",
+      "unowned", "var", "weak", "where", "while", "willSet", "Any", "Self"
+    ];
+
+    var RE = new RegExp([
+      "(\\/\\/[^\\n]*|\\/\\*[\\s\\S]*?\\*\\/)",              /* 1 comment    */
+      "(\"\"\"[\\s\\S]*?\"\"\"|\"(?:\\\\.|[^\"\\\\\\n])*\")", /* 2 string     */
+      "(@[A-Za-z_]\\w*)",                                     /* 3 attribute  */
+      "(\\b(?:" + KEYWORDS.join("|") + ")\\b)",               /* 4 keyword    */
+      "(\\.[A-Za-z_]\\w*)",                                   /* 5 member     */
+      "(\\b[A-Z]\\w*\\b)",                                    /* 6 type       */
+      "(\\b0x[0-9a-fA-F_]+\\b|\\b\\d[\\d_]*(?:\\.\\d[\\d_]*)?\\b)" /* 7 number */
+    ].join("|"), "g");
+
+    var CLASSES = [null, "comment", "string", "attr", "keyword", "member", "type", "number"];
+
+    function esc(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function highlight(src) {
+      var out = "", last = 0, m, i, cls;
+      RE.lastIndex = 0;
+      while ((m = RE.exec(src)) !== null) {
+        if (m[0] === "") { RE.lastIndex++; continue; }
+        for (i = 1; i < CLASSES.length; i++) { if (m[i] !== undefined) { cls = CLASSES[i]; break; } }
+        out += esc(src.slice(last, m.index));
+        out += '<span class="tok-' + cls + '">' + esc(m[0]) + "</span>";
+        last = m.index + m[0].length;
+      }
+      return out + esc(src.slice(last));
+    }
+
+    document.querySelectorAll("pre code").forEach(function (block) {
+      block.innerHTML = highlight(block.textContent);
+    });
+  })();
+  </script>
 </body>
 </html>

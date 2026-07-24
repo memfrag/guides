@@ -22,7 +22,7 @@
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
 
-  --measure: 1040px;
+  --measure: 1240px;
   --gutter: clamp(24px, 5vw, 56px);
 }
 
@@ -50,7 +50,7 @@ a { color: var(--view); }
   position: fixed;
   top: 0;
   bottom: 0;
-  left: max(24px, calc(50% - var(--measure) / 2 - 64px));
+  left: max(24px, calc(50% - var(--measure) / 2 - 48px));
   width: 0;
   border-left: 1px dashed var(--guide-dim);
   opacity: .5;
@@ -58,7 +58,7 @@ a { color: var(--view); }
 }
 
 /* Below this the rail would clamp to the viewport edge and crowd the text. */
-@media (max-width: 1220px) { .rail { display: none; } }
+@media (max-width: 1385px) { .rail { display: none; } }
 
 /* ==========================================================================
    Shared type

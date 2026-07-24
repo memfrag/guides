@@ -312,6 +312,63 @@
     margin-bottom: 6px;
   }
 
+  /* ---- Floating ToC: only appears when there's room beside the column ---- */
+  section { scroll-margin-top: 28px; }
+
+  .toc { display: none; }
+
+  @media (min-width: 1240px) {
+    .toc {
+      display: block;
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      left: calc(50% + 392px);   /* 32px clear of the 720px column */
+      width: 200px;
+      max-height: 78vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.45;
+      scrollbar-width: thin;
+      scrollbar-color: var(--line) transparent;
+    }
+  }
+  @media print { .toc { display: none; } }
+
+  .toc-title {
+    display: block;
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--guide);
+    margin-bottom: 12px;
+  }
+  .toc ol { list-style: none; }
+  .toc a {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 3px 0;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color .15s ease;
+  }
+  .toc a::before {
+    content: "";
+    flex: none;
+    width: 10px;
+    margin-top: .58em;
+    border-top: 1px dashed var(--guide-dim);
+    transition: width .15s ease, border-color .15s ease;
+  }
+  .toc a:hover { color: var(--ink); }
+  .toc a:hover::before { border-color: var(--guide); }
+  .toc a:focus-visible { color: var(--ink); outline: 1px dashed var(--guide); outline-offset: 3px; }
+  .toc a.active { color: var(--guide); }
+  .toc a.active::before { width: 22px; border-color: var(--guide); }
+
   footer {
     margin-top: 110px;
     padding-top: 22px;
@@ -325,6 +382,26 @@
 <body>
 
 <div class="rail" aria-hidden="true"></div>
+
+<nav class="toc" aria-label="On this page">
+  <span class="toc-title">On this page</span>
+  <ol>
+    <li><a href="#guide-is-a-number">A guide is just a number</a></li>
+    <li><a href="#who-asks-which-question">Who asks which question</a></li>
+    <li><a href="#frames">Frames: a container of one</a></li>
+    <li><a href="#where-alignment-isnt">Where alignment isn't</a></li>
+    <li><a href="#text-horizontally">Text, horizontally</a></li>
+    <li><a href="#leading-is-not-left">Leading is not left</a></li>
+    <li><a href="#baselines">Baselines</a></li>
+    <li><a href="#grids">Grids</a></li>
+    <li><a href="#overriding-the-answer">Overriding the answer</a></li>
+    <li><a href="#custom-guides">Custom guides</a></li>
+    <li><a href="#anchors">Anchors</a></li>
+    <li><a href="#matched-geometry">Matched geometry</a></li>
+    <li><a href="#layout-protocol">The Layout protocol</a></li>
+    <li><a href="#form-label-drifted">Case study: the drifting label</a></li>
+  </ol>
+</nav>
 
 <div class="wrap">
 
@@ -363,7 +440,7 @@
 </header>
 
 <!-- ================================================================ -->
-<section>
+<section id="guide-is-a-number">
   <span class="tick">ViewDimensions → CGFloat</span>
   <h2>A guide is just a number</h2>
   <p>
@@ -422,7 +499,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="who-asks-which-question">
   <span class="tick">HStack · VStack · ZStack · frame</span>
   <h2>Who asks which question</h2>
   <p>
@@ -476,7 +553,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="frames">
   <span class="tick">.frame(width:height:alignment:)</span>
   <h2>Frames: a container of one</h2>
   <p>
@@ -540,7 +617,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="where-alignment-isnt">
   <span class="tick">Spacer · .offset · GeometryReader</span>
   <h2>Where alignment isn't</h2>
   <p>
@@ -592,7 +669,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="text-horizontally">
   <span class="tick">.multilineTextAlignment</span>
   <h2>Text, horizontally: three tools, three jobs</h2>
   <p>
@@ -668,7 +745,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="leading-is-not-left">
   <span class="tick">leading ≠ left</span>
   <h2>Leading is not left</h2>
   <p>
@@ -717,7 +794,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="baselines">
   <span class="tick">.firstTextBaseline / .lastTextBaseline</span>
   <h2>Baselines: the typographer's guide</h2>
   <p>
@@ -754,7 +831,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="grids">
   <span class="tick">Grid · gridColumnAlignment · gridCellAnchor</span>
   <h2>Grids: alignment in two dimensions</h2>
   <p>
@@ -797,7 +874,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="overriding-the-answer">
   <span class="tick">.alignmentGuide(_:computeValue:)</span>
   <h2>Overriding the answer</h2>
   <p>
@@ -864,7 +941,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="custom-guides">
   <span class="tick">AlignmentID</span>
   <h2>Custom guides: aligning across containers</h2>
   <p>
@@ -973,7 +1050,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="anchors">
   <span class="tick">Anchor&lt;CGRect&gt; · anchorPreference</span>
   <h2>Anchors: geometry across the whole tree</h2>
   <p>
@@ -1183,7 +1260,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="matched-geometry">
   <span class="tick">matchedGeometryEffect(id:in:)</span>
   <h2>Matched geometry: alignment over time</h2>
   <p>
@@ -1233,7 +1310,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="layout-protocol">
   <span class="tick">Layout · sizeThatFits · placeSubviews</span>
   <h2>The Layout protocol: becoming the container</h2>
   <p>
@@ -1507,7 +1584,7 @@
 </section>
 
 <!-- ================================================================ -->
-<section>
+<section id="form-label-drifted">
   <span class="tick">case study · the drifting form label</span>
   <h2>Why the form label drifted</h2>
   <p>
@@ -1564,6 +1641,58 @@
 </div>
 
 <script>
+/* Floating ToC: highlight the section currently under the reading line. */
+(function () {
+  const toc = document.querySelector(".toc");
+  if (!toc) return;
+
+  const linkFor = new Map();
+  toc.querySelectorAll("a[href^='#']").forEach(a => {
+    const section = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+    if (section) linkFor.set(section, a);
+  });
+  const sections = [...linkFor.keys()];
+  if (!sections.length) return;
+
+  let current = null;
+
+  function setActive(section) {
+    if (section === current) return;
+    if (current) linkFor.get(current).classList.remove("active");
+    current = section;
+    if (!section) return;
+
+    const a = linkFor.get(section);
+    a.classList.add("active");
+    // If the list itself is scrolling, keep the active entry in view.
+    const top = a.offsetTop, h = a.offsetHeight;
+    if (top < toc.scrollTop || top + h > toc.scrollTop + toc.clientHeight) {
+      toc.scrollTop = top - (toc.clientHeight - h) / 2;
+    }
+  }
+
+  function update() {
+    const line = window.innerHeight * 0.3;
+    let active = null;
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top > line) break;
+      active = section;   // nothing is active while the hero is still on the line
+    }
+    setActive(active);
+  }
+
+  let queued = false;
+  function onScroll() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; update(); });
+  }
+
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll, { passive: true });
+  update();
+})();
+
 (function () {
   const stage    = document.getElementById("stage");
   const line     = document.getElementById("guideline");

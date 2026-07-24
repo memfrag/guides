@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lines to Live By — SwiftUI Alignment &amp; Alignment Guides</title>
+<style>
+  :root {
+    --bg: #191b20;
+    --panel: #21242b;
+    --panel-2: #262a32;
+    --line: #33373f;
+    --ink: #eceef1;
+    --muted: #9aa0ab;
+    --guide: #ff7a59;   /* alignment rules, guide values */
+    --guide-dim: #b25642;
+    --view: #6fd3e7;    /* view boxes, content */
+    --view-dim: #3f7c8a;
+    --ok: #8fd48a;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; animation: none !important; }
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: rgba(255,122,89,.35); }
+
+  /* ---- The page's own guide line (signature) ---- */
+  .rail {
+    position: fixed;
+    top: 0; bottom: 0;
+    left: max(24px, calc(50% - 470px));
+    width: 0;
+    border-left: 1px dashed var(--guide-dim);
+    opacity: .5;
+    pointer-events: none;
+  }
+  @media (max-width: 720px) { .rail { display: none; } }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+  @media (min-width: 721px) {
+    .wrap { padding-left: 56px; }
+  }
+
+  /* ---- Section markers hanging on the rail ---- */
+  section { margin-top: 96px; position: relative; }
+  .tick {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .04em;
+    color: var(--guide);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .tick::before {
+    content: "";
+    width: 26px;
+    border-top: 1px dashed var(--guide);
+  }
+  @media (min-width: 721px) {
+    .tick { position: relative; left: -33px; }
+  }
+
+  h1, h2, h3 { font-family: var(--sans); font-weight: 750; letter-spacing: -0.025em; text-wrap: balance; }
+  h2 { font-size: 30px; line-height: 1.2; margin-bottom: 14px; }
+  h3 { font-size: 19px; margin: 28px 0 8px; }
+  p { margin: 14px 0; }
+  p.lede { font-size: 19px; color: var(--muted); }
+  strong { color: var(--ink); }
+  em { font-style: italic; }
+  a { color: var(--view); }
+  .g { color: var(--guide); }   /* guide-things */
+  .v { color: var(--view); }    /* view-things */
+
+  code {
+    font-family: var(--mono);
+    font-size: .85em;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px 2px;
+    white-space: nowrap;
+  }
+
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 20px 0;
+    line-height: 1.55;
+  }
+  pre code {
+    background: none; border: none; padding: 0;
+    font-size: 13.5px;
+    white-space: pre;
+    color: #ced3da;
+  }
+  .kw { color: var(--guide); }        /* keywords + guide API */
+  .ty { color: var(--view); }         /* types */
+  .cm { color: #7b828d; font-style: italic; }
+  .st { color: var(--ok); }
+  .nm { color: #e6c07b; }
+
+  /* ---- Hero ---- */
+  .back-link {
+    display: inline-block;
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: .04em;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .back-link:hover { color: var(--guide); }
+  header { padding-top: 56px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--guide);
+  }
+  h1 {
+    font-size: clamp(40px, 7vw, 62px);
+    line-height: 1.03;
+    margin: 14px 0 18px;
+  }
+  h1 .dashed {
+    background-image: linear-gradient(to right, var(--guide) 55%, transparent 45%);
+    background-size: 14px 2px;
+    background-repeat: repeat-x;
+    background-position: 0 96%;
+    padding-bottom: .06em;
+  }
+
+  /* ---- Interactive demo ---- */
+  .demo {
+    margin: 40px 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .demo-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+  }
+  .demo-controls .lbl {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--muted);
+    align-self: center;
+    margin-right: 4px;
+  }
+  .demo-controls button {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .demo-controls button:hover { border-color: var(--guide-dim); }
+  .demo-controls button:focus-visible { outline: 2px solid var(--view); outline-offset: 2px; }
+  .demo-controls button[aria-pressed="true"] {
+    border-color: var(--guide);
+    color: var(--guide);
+  }
+  .stage {
+    position: relative;
+    height: 240px;
+    padding: 0 26px;
+    display: flex;
+    gap: 22px;
+    align-items: flex-start;
+  }
+  .stage::after {  /* container outline hint */
+    content: "HStack";
+    position: absolute;
+    right: 12px; top: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    opacity: .8;
+  }
+  .stage .box {
+    border: 1.5px solid var(--view);
+    background: color-mix(in srgb, var(--view) 10%, transparent);
+    border-radius: 10px;
+    width: 130px;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--view);
+    line-height: 1.5;
+    transition: margin .25s ease;
+  }
+  .stage .box small { display: block; color: var(--muted); font-size: 11px; }
+  #guideline {
+    position: absolute;
+    left: 10px; right: 10px;
+    border-top: 2px dashed var(--guide);
+    top: 40px;
+    transition: top .25s ease;
+    pointer-events: none;
+  }
+  #guideline::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 4px; top: -22px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--guide);
+    background: var(--panel);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .demo-code {
+    border-top: 1px solid var(--line);
+    padding: 12px 18px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .demo-code .g { color: var(--guide); }
+  .caption {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin: 10px 2px 0;
+  }
+
+  /* ---- Figures ---- */
+  figure {
+    margin: 26px 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 20px 8px;
+    overflow-x: auto;
+  }
+  figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  figcaption {
+    font-size: 13.5px;
+    color: var(--muted);
+    padding: 10px 4px 12px;
+    max-width: 560px;
+  }
+
+  /* ---- Tables ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    margin: 18px 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .05em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  td code { background: var(--panel-2); }
+
+  .callout {
+    border: 1px solid var(--guide-dim);
+    border-left: 3px solid var(--guide);
+    background: color-mix(in srgb, var(--guide) 6%, var(--panel));
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 22px 0;
+    font-size: 15.5px;
+  }
+  .callout .t {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--guide);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  footer {
+    margin-top: 110px;
+    padding-top: 22px;
+    border-top: 1px dashed var(--guide-dim);
+    font-size: 13.5px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+</style>
+</head>
+<body>
+
+<div class="rail" aria-hidden="true"></div>
+
+<div class="wrap">
+
+<a class="back-link" href="../index.html">&larr; All guides</a>
+
+<header>
+  <span class="eyebrow">SwiftUI Layout Field Guide</span>
+  <h1>Alignment is a<br><span class="dashed">line to live by</span></h1>
+  <p class="lede">
+    Every SwiftUI container asks its children the same question: <em>“where is your
+    <span class="g">.top</span>? your <span class="g">.center</span>? your baseline?”</em>
+    Each view answers with a number, and the container draws one dashed line and makes
+    every answer land on it. That's the whole system — this page builds it up from that
+    one idea, ending with a real bug it explains.
+  </p>
+
+  <div class="demo">
+    <div class="demo-controls" role="group" aria-label="Choose the HStack alignment">
+      <span class="lbl">HStack(alignment:</span>
+      <button aria-pressed="true"  data-mode="top">.top</button>
+      <button aria-pressed="false" data-mode="center">.center</button>
+      <button aria-pressed="false" data-mode="bottom">.bottom</button>
+      <button aria-pressed="false" data-mode="baseline">.firstTextBaseline</button>
+      <span class="lbl">)</span>
+    </div>
+    <div class="stage" id="stage">
+      <div id="guideline" data-label="guide"></div>
+      <div class="box" id="boxA" style="height:64px">Badge<small>64 pt</small></div>
+      <div class="box" id="boxB" style="height:128px"><span id="baselineRef">Title text</span><small>then a longer<br>paragraph body<br>128 pt</small></div>
+      <div class="box" id="boxC" style="height:96px">Thumbnail<small>96 pt</small></div>
+    </div>
+    <div class="demo-code" id="demoCode">HStack(alignment: <span class="g">.top</span>) { … }</div>
+  </div>
+  <p class="caption">Click an alignment. The <span class="g">dashed line</span> is the guide; the
+  <span class="v">boxes</span> are views of different heights being asked to meet it.</p>
+</header>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">ViewDimensions → CGFloat</span>
+  <h2>A guide is just a number</h2>
+  <p>
+    For every alignment, every view has a <strong>guide</strong>: a function that takes the view's
+    own size and returns a distance from its edge. The defaults are exactly what you'd guess —
+    and they're the values you're overriding when you reach for <code>.alignmentGuide</code> later.
+  </p>
+
+  <figure role="img" aria-label="Three views of different heights, each with a tick mark at its center guide, then shown aligned so all ticks meet one dashed line.">
+    <svg viewBox="0 0 640 250" width="640" height="250" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- left: each view answers -->
+      <text x="10" y="18" fill="#9aa0ab">1 · each view answers “where is your .center?”</text>
+      <g>
+        <rect x="18"  y="60"  width="70" height="50"  rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+        <line x1="10" y1="85" x2="96" y2="85" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+        <text x="22" y="128" fill="#ff7a59">25</text>
+
+        <rect x="130" y="46"  width="70" height="110" rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+        <line x1="122" y1="101" x2="208" y2="101" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+        <text x="134" y="174" fill="#ff7a59">55</text>
+
+        <rect x="242" y="70" width="70" height="70" rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+        <line x1="234" y1="105" x2="320" y2="105" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+        <text x="246" y="158" fill="#ff7a59">35</text>
+      </g>
+      <!-- arrow -->
+      <path d="M 342 105 h 28" stroke="#9aa0ab" stroke-width="1.5" fill="none"/>
+      <path d="M 366 100 l 8 5 l -8 5 z" fill="#9aa0ab"/>
+      <!-- right: the container lines them up -->
+      <text x="392" y="18" fill="#9aa0ab">2 · the HStack makes the answers meet</text>
+      <g>
+        <line x1="388" y1="103" x2="632" y2="103" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+        <rect x="400" y="78"  width="64" height="50"  rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+        <rect x="478" y="48"  width="64" height="110" rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+        <rect x="556" y="68"  width="64" height="70"  rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+        <text x="470" y="185" fill="#ff7a59">one shared line</text>
+      </g>
+    </svg>
+    <figcaption>
+      Alignment is a two-step negotiation: views report a per-alignment offset
+      (<span class="g">orange ticks</span>), then the container shifts each child so all
+      the reported offsets land on a single shared line.
+    </figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th>guide</th><th>default answer</th></tr></thead>
+    <tbody>
+      <tr><td><code>.top</code> / <code>.leading</code></td><td><code>0</code></td></tr>
+      <tr><td><code>VerticalAlignment.center</code></td><td><code>height / 2</code></td></tr>
+      <tr><td><code>.bottom</code> / <code>.trailing</code></td><td><code>height</code> / <code>width</code></td></tr>
+      <tr><td><code>.firstTextBaseline</code> (text)</td><td>baseline of the first line</td></tr>
+      <tr><td><code>.firstTextBaseline</code> (no text!)</td><td><strong>the bottom edge</strong> — remember this one</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">HStack · VStack · ZStack · frame</span>
+  <h2>Who asks which question</h2>
+  <p>
+    A container only asks about the axis it doesn't already control. An
+    <code>HStack</code> places children horizontally itself, so the only freedom left is vertical —
+    its <code>alignment:</code> parameter is a <code>VerticalAlignment</code>. A <code>VStack</code> is the mirror
+    image. <code>ZStack</code>, <code>.frame(alignment:)</code>, <code>.overlay</code> and <code>.background</code>
+    control neither axis, so they take a composite <code>Alignment</code> — one horizontal
+    <em>and</em> one vertical guide, like <code>.topLeading</code>.
+  </p>
+
+  <figure role="img" aria-label="Three containers: an HStack with a horizontal dashed guide, a VStack with a vertical dashed guide, and a ZStack with both guides crossing at the top-leading corner.">
+    <svg viewBox="0 0 640 210" width="640" height="210" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- HStack -->
+      <text x="30" y="16" fill="#9aa0ab">HStack(alignment: .top)</text>
+      <line x1="20" y1="40" x2="200" y2="40" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <rect x="28"  y="40" width="44" height="52" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="84"  y="40" width="44" height="96" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="140" y="40" width="44" height="70" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="30" y="196" fill="#9aa0ab">asks: VerticalAlignment</text>
+
+      <!-- VStack -->
+      <text x="252" y="16" fill="#9aa0ab">VStack(alignment: .leading)</text>
+      <line x1="262" y1="28" x2="262" y2="170" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <rect x="262" y="36"  width="96" height="30" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="262" y="76"  width="140" height="30" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="262" y="116" width="70" height="30" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="252" y="196" fill="#9aa0ab">asks: HorizontalAlignment</text>
+
+      <!-- ZStack -->
+      <text x="472" y="16" fill="#9aa0ab">ZStack(alignment: .topLeading)</text>
+      <line x1="482" y1="28" x2="482" y2="170" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <line x1="470" y1="40" x2="630" y2="40" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <rect x="482" y="40" width="140" height="110" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="482" y="40" width="72"  height="48"  rx="7" fill="rgba(111,211,231,.16)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="472" y="196" fill="#9aa0ab">asks: both (Alignment)</text>
+    </svg>
+    <figcaption>
+      The <span class="g">guide line</span> lives on the container's free axis. That's why
+      <code>HStack(alignment: .leading)</code> won't compile — there is no horizontal freedom
+      to spend inside an HStack.
+    </figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="t">Rule of thumb</span>
+    Alignment never <em>moves</em> a container's frame — it distributes children <em>inside</em>
+    whatever space the container was given. If a whole stack sits in the wrong place, the
+    fix is spacing or frames, not alignment.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">.frame(width:height:alignment:)</span>
+  <h2>Frames: a container of one</h2>
+  <p>
+    <code>.frame</code> doesn't resize its child — it wraps the child in a new, invisible
+    view of the requested size. When that wrapper ends up <em>bigger</em> than the content,
+    it's a container with exactly one child, and its <code>alignment:</code> parameter answers
+    the usual question: where inside me does the child sit? The default is
+    <code>.center</code>, on both axes.
+  </p>
+
+<pre><code><span class="ty">Text</span>(<span class="st">"Done"</span>)
+    <span class="cm">// a row that spans the container, with the text pinned leading —</span>
+    <span class="cm">// the everyday “make this whole row tappable / left-aligned” move</span>
+    .<span class="kw">frame</span>(maxWidth: <span class="kw">.infinity</span>, alignment: <span class="kw">.leading</span>)</code></pre>
+
+  <figure role="img" aria-label="Two frames larger than their child view: in the first the child sits centered by default; in the second, alignment topLeading pins the child to the frame's top-leading corner.">
+    <svg viewBox="0 0 640 200" width="640" height="200" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- default .center -->
+      <text x="20" y="18" fill="#9aa0ab">.frame(w: 260, h: 120)          — default .center</text>
+      <rect x="20" y="32" width="260" height="120" rx="10" fill="none" stroke="#9aa0ab" stroke-width="1.2"/>
+      <line x1="150" y1="26" x2="150" y2="158" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <line x1="12"  y1="92" x2="288" y2="92" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <rect x="105" y="70" width="90" height="44" rx="8" fill="rgba(111,211,231,.12)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="20" y="176" fill="#9aa0ab">spare space split evenly</text>
+
+      <!-- .topLeading -->
+      <text x="360" y="18" fill="#9aa0ab">alignment: .topLeading</text>
+      <rect x="360" y="32" width="260" height="120" rx="10" fill="none" stroke="#9aa0ab" stroke-width="1.2"/>
+      <line x1="360" y1="26" x2="360" y2="158" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <line x1="352" y1="32" x2="628" y2="32" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <rect x="360" y="32" width="90" height="44" rx="8" fill="rgba(111,211,231,.12)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="360" y="176" fill="#9aa0ab">child's guides meet the frame's guides</text>
+    </svg>
+    <figcaption>
+      The <span class="g">frame's guides</span> and the <span class="v">child's guides</span> are
+      joined exactly like stack children — a frame is just the smallest possible container.
+    </figcaption>
+  </figure>
+
+  <p>Two consequences people trip on:</p>
+  <p>
+    <strong>Alignment needs spare space.</strong> <code>.frame(alignment: .leading)</code>
+    with no width does nothing — an unconstrained frame hugs its child, and there's no
+    room left to distribute. If an <code>alignment:</code> seems dead, check that the frame
+    is actually bigger than the content on that axis.
+  </p>
+  <p>
+    <strong>Alignment acts per axis.</strong> <code>.frame(maxWidth: .infinity,
+    alignment: .bottomTrailing)</code> only moves the child trailing — with no height
+    constraint there is no vertical slack, so the <code>bottom</code> half is inert.
+    A composite alignment is just two independent guides.
+  </p>
+
+  <div class="callout">
+    <span class="t">Same machinery, one child</span>
+    <code>.overlay(alignment:)</code>, <code>.background(alignment:)</code> and
+    <code>ZStack(alignment:)</code> follow identical rules — a secondary view is placed
+    inside (or behind) a host by joining guide pairs. Everything from the
+    <code>.alignmentGuide</code> section below works there too.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">Spacer · .offset · GeometryReader</span>
+  <h2>Where alignment isn't</h2>
+  <p>
+    Half of alignment debugging is recognizing the tools that <em>look</em> like alignment
+    but play by different rules.
+  </p>
+
+  <h3>Spacer competes; alignment negotiates</h3>
+  <p>
+    <code>HStack { Text("Done"); Spacer() }</code> and
+    <code>Text("Done").frame(maxWidth: .infinity, alignment: .leading)</code> often render
+    identically — but a <code>Spacer</code> is a real sibling that <em>claims the leftover
+    space</em> as its own size, while frame alignment distributes spare room without adding
+    a participant. Prefer the frame for pinning one view to an edge; reach for
+    <code>Spacer</code> when you're distributing several views (<code>Text; Spacer(); Button</code>)
+    or need its <code>minLength</code> to guarantee a gap. And mind that a bare
+    <code>Spacer()</code> has a default minimum length — in tight layouts that minimum can
+    win over your content's space.
+  </p>
+
+  <h3>offset and position move pixels, not layout</h3>
+  <p>
+    Alignment is a <em>layout-time negotiation</em> — move a view with a guide and its
+    container's size, its siblings, and hit-testing all account for the new place.
+    <code>.offset</code> shifts only the <em>rendering</em> after layout is done: the view still
+    occupies its original slot, neighbors don't react, and it can happily draw over them.
+    <code>.position</code> goes further and discards the parent's layout entirely, centering
+    the view at a coordinate. Use <code>.offset</code> for decorative nudges and animation;
+    the moment other views should <em>respond</em> to the movement, it's an alignment job.
+  </p>
+
+  <h3>Containers that never ask</h3>
+  <p>
+    Two containers have no <code>alignment:</code> parameter at all, and both are notorious:
+  </p>
+  <p>
+    <strong><code>GeometryReader</code></strong> is greedy (takes all proposed space) and pins
+    its content <strong>top-leading</strong> — not centered like nearly everything else. Wrap
+    the content in <code>.frame(maxWidth: .infinity, maxHeight: .infinity)</code> to get
+    centering back.
+  </p>
+  <p>
+    <strong><code>ScrollView</code></strong> sizes its content to the content's ideal size, so
+    a narrow child sits at the scroll origin rather than centering in the viewport. Give
+    the content <code>.frame(maxWidth: .infinity)</code> to claim the viewport's width, and
+    use <code>.defaultScrollAnchor(.center)</code> when you want the initial scroll position —
+    a different thing from alignment — to start centered.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">.multilineTextAlignment</span>
+  <h2>Text, horizontally: three tools, three jobs</h2>
+  <p>
+    “Why won't my text center?” is the most-asked alignment question in SwiftUI, because
+    three different tools all sound like the answer — and each aligns a <em>different
+    thing</em>:
+  </p>
+
+  <table>
+    <thead><tr><th>tool</th><th>aligns what</th></tr></thead>
+    <tbody>
+      <tr><td><code>VStack(alignment:)</code> etc.</td><td>the <strong>Text view</strong> among its siblings</td></tr>
+      <tr><td><code>.frame(maxWidth:alignment:)</code></td><td>the <strong>text block</strong> within the frame's spare width</td></tr>
+      <tr><td><code>.multilineTextAlignment</code></td><td>the <strong>wrapped lines</strong> inside the text block itself</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    The one that surprises everyone: <code>.multilineTextAlignment</code> never moves the
+    text block. A <code>Text</code> hugs its content, so on a single short line the block is
+    exactly as wide as the words and there is nothing to re-arrange — the modifier appears
+    to do nothing. It only becomes visible once the text wraps and lines have different
+    lengths.
+  </p>
+
+  <figure role="img" aria-label="Two wide containers holding a wrapped text block: first, the block is pinned trailing while its lines are flush left inside the block; second, the block is pinned leading while its lines are centered inside the block.">
+    <svg viewBox="0 0 640 220" width="640" height="220" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- A: block trailing, lines leading -->
+      <text x="20" y="18" fill="#9aa0ab">.frame(maxWidth: ∞, alignment: .trailing)</text>
+      <text x="20" y="34" fill="#9aa0ab">.multilineTextAlignment(.leading)</text>
+      <rect x="20" y="46" width="280" height="104" rx="10" fill="none" stroke="#9aa0ab" stroke-width="1.2"/>
+      <line x1="292" y1="40" x2="292" y2="156" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <rect x="152" y="58" width="140" height="80" rx="8" fill="rgba(111,211,231,.08)" stroke="#6fd3e7" stroke-width="1.2" stroke-dasharray="3 3"/>
+      <rect x="160" y="66"  width="118" height="9" rx="4.5" fill="#6fd3e7" opacity=".85"/>
+      <rect x="160" y="84"  width="124" height="9" rx="4.5" fill="#6fd3e7" opacity=".85"/>
+      <rect x="160" y="102" width="96"  height="9" rx="4.5" fill="#6fd3e7" opacity=".85"/>
+      <rect x="160" y="120" width="52"  height="9" rx="4.5" fill="#6fd3e7" opacity=".85"/>
+      <text x="20" y="186" fill="#9aa0ab">block sits trailing; lines rag right</text>
+
+      <!-- B: block leading, lines centered -->
+      <text x="360" y="18" fill="#9aa0ab">.frame(maxWidth: ∞, alignment: .leading)</text>
+      <text x="360" y="34" fill="#9aa0ab">.multilineTextAlignment(.center)</text>
+      <rect x="360" y="46" width="280" height="104" rx="10" fill="none" stroke="#9aa0ab" stroke-width="1.2"/>
+      <line x1="368" y1="40" x2="368" y2="156" stroke="#ff7a59" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <rect x="368" y="58" width="140" height="80" rx="8" fill="rgba(111,211,231,.08)" stroke="#6fd3e7" stroke-width="1.2" stroke-dasharray="3 3"/>
+      <rect x="379" y="66"  width="118" height="9" rx="4.5" fill="#6fd3e7" opacity=".85"/>
+      <rect x="376" y="84"  width="124" height="9" rx="4.5" fill="#6fd3e7" opacity=".85"/>
+      <rect x="390" y="102" width="96"  height="9" rx="4.5" fill="#6fd3e7" opacity=".85"/>
+      <rect x="412" y="120" width="52"  height="9" rx="4.5" fill="#6fd3e7" opacity=".85"/>
+      <text x="360" y="186" fill="#9aa0ab">block sits leading; lines center inside it</text>
+    </svg>
+    <figcaption>
+      Two independent decisions: the <span class="g">frame alignment</span> places the
+      dashed <span class="v">text block</span> in the container's spare width;
+      <code>.multilineTextAlignment</code> arranges the lines <em>inside</em> that block.
+      Any combination is legal.
+    </figcaption>
+  </figure>
+
+<pre><code><span class="cm">// A fully centered paragraph needs BOTH tools:</span>
+<span class="ty">Text</span>(longMessage)
+    .<span class="kw">multilineTextAlignment</span>(<span class="kw">.center</span>)              <span class="cm">// lines, within the block</span>
+    .<span class="kw">frame</span>(maxWidth: <span class="kw">.infinity</span>)                    <span class="cm">// block, within the row</span>
+                                                   <span class="cm">// (.center is the default)</span></code></pre>
+
+  <div class="callout">
+    <span class="t">Debugging recipe</span>
+    Text not aligning? Add <code>.border(.red)</code> to the <code>Text</code>. If the border
+    hugs the words, the block itself needs placing — reach for <code>.frame</code> or the
+    stack's <code>alignment:</code>. If the border spans the width you expected, the lines
+    need arranging — reach for <code>.multilineTextAlignment</code>.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">leading ≠ left</span>
+  <h2>Leading is not left</h2>
+  <p>
+    SwiftUI's horizontal guides are deliberately not named <code>.left</code> and
+    <code>.right</code>. <code>.leading</code> means <em>where reading starts</em> — the left in
+    English, the <strong>right</strong> in Arabic or Hebrew. Every leading/trailing guide,
+    stack alignment, frame alignment, and <code>TextAlignment</code> resolves against the
+    environment's <code>layoutDirection</code>, so a layout written once mirrors correctly
+    for free.
+  </p>
+
+  <figure role="img" aria-label="The same VStack with leading alignment shown twice: in a left-to-right environment the guide and rows hug the left edge; in a right-to-left environment the same code hugs the right edge.">
+    <svg viewBox="0 0 640 190" width="640" height="190" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <text x="20" y="18" fill="#9aa0ab">VStack(alignment: .leading) — English (LTR)</text>
+      <line x1="30" y1="30" x2="30" y2="150" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <rect x="30" y="40"  width="120" height="26" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="30" y="76"  width="170" height="26" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="30" y="112" width="90"  height="26" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="20" y="176" fill="#9aa0ab">reading starts at the left</text>
+
+      <text x="360" y="18" fill="#9aa0ab">same code — Arabic (RTL)</text>
+      <line x1="610" y1="30" x2="610" y2="150" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <rect x="490" y="40"  width="120" height="26" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="440" y="76"  width="170" height="26" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <rect x="520" y="112" width="90"  height="26" rx="7" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="360" y="176" fill="#9aa0ab">…so .leading resolves to the right</text>
+    </svg>
+    <figcaption>
+      One <span class="g">guide</span>, two resolutions. Nothing in the code changed —
+      only the environment's <code>layoutDirection</code>.
+    </figcaption>
+  </figure>
+
+<pre><code><span class="cm">// Audit any screen's mirrored layout without changing your locale:</span>
+<span class="ty">ContentView</span>()
+    .<span class="kw">environment</span>(\.layoutDirection, <span class="kw">.rightToLeft</span>)</code></pre>
+
+  <div class="callout">
+    <span class="t">What doesn't flip</span>
+    Alignment mirrors automatically; <em>content</em> doesn't always. SF Symbols with a
+    natural direction provide RTL variants, but your own directional images may need
+    explicit handling, and things that are physically sided — a slider tracking a
+    real-world dial, musical notation — should sometimes <em>stay</em> LTR. Mirroring
+    layout is free; deciding what deserves mirroring is design.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">.firstTextBaseline / .lastTextBaseline</span>
+  <h2>Baselines: the typographer's guide</h2>
+  <p>
+    Centering a label against a taller control looks fine until the text wraps or the
+    control grows. Aligning <strong>baselines</strong> — the invisible line type sits on —
+    keeps a label and its field reading as one sentence regardless of their heights.
+    That's what <code>.firstTextBaseline</code> is for, and it's what macOS forms use to line
+    labels up with their fields.
+  </p>
+
+  <figure role="img" aria-label="Comparison of center alignment versus first-text-baseline alignment for a label next to a taller text field.">
+    <svg viewBox="0 0 640 170" width="640" height="170" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- center version -->
+      <text x="20" y="18" fill="#9aa0ab">.center — label floats mid-air</text>
+      <line x1="14" y1="70" x2="300" y2="70" stroke="#7b828d" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <text x="22" y="74" fill="#eceef1" font-size="13">Summary</text>
+      <rect x="104" y="34" width="190" height="72" rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="114" y="54" fill="#6fd3e7" font-size="12">First line of text…</text>
+
+      <!-- baseline version -->
+      <text x="352" y="18" fill="#9aa0ab">.firstTextBaseline — reads as one line</text>
+      <line x1="344" y1="58" x2="630" y2="58" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <text x="352" y="56" fill="#eceef1" font-size="13">Summary</text>
+      <rect x="434" y="34" width="190" height="72" rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="444" y="56" fill="#6fd3e7" font-size="12">First line of text…</text>
+      <text x="344" y="146" fill="#ff7a59">label baseline = field's first-line baseline</text>
+    </svg>
+    <figcaption>
+      <code>.firstTextBaseline</code> asks each child for the baseline of its <em>first</em> line;
+      <code>.lastTextBaseline</code> asks for the last — handy when a control should hang from a
+      paragraph's final line instead.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">Grid · gridColumnAlignment · gridCellAnchor</span>
+  <h2>Grids: alignment in two dimensions</h2>
+  <p>
+    <code>Grid</code> is the one container where alignment layers: a default for
+    <em>every cell</em>, overridable per <em>column</em>, per <em>row</em>, and per
+    <em>cell</em> — from broadest to most specific:
+  </p>
+
+  <table>
+    <thead><tr><th>level</th><th>api</th><th>sets</th></tr></thead>
+    <tbody>
+      <tr><td>whole grid</td><td><code>Grid(alignment:)</code></td><td>default <code>Alignment</code> for every cell</td></tr>
+      <tr><td>one column</td><td><code>.gridColumnAlignment(_:)</code></td><td>that column's horizontal guide (declare on any one cell in it)</td></tr>
+      <tr><td>one row</td><td><code>GridRow(alignment:)</code></td><td>that row's vertical guide</td></tr>
+      <tr><td>one cell</td><td><code>.gridCellAnchor(_:)</code></td><td>a <code>UnitPoint</code> for this cell — the tool for cells that span columns</td></tr>
+    </tbody>
+  </table>
+
+<pre><code><span class="ty">Grid</span>(alignment: <span class="kw">.leadingFirstTextBaseline</span>, horizontalSpacing: <span class="nm">16</span>) {
+    <span class="ty">GridRow</span> {
+        <span class="ty">Text</span>(<span class="st">"Wi-Fi"</span>)
+        <span class="ty">Text</span>(<span class="st">"Connected"</span>)
+            <span class="cm">// the whole values column right-aligns, ledger-style</span>
+            .<span class="kw">gridColumnAlignment</span>(<span class="kw">.trailing</span>)
+    }
+    <span class="ty">GridRow</span> {
+        <span class="ty">Text</span>(<span class="st">"Battery"</span>)
+        <span class="ty">Text</span>(<span class="st">"87 %"</span>)
+    }
+}</code></pre>
+
+  <p>
+    Note what the column override is: <code>.gridColumnAlignment(.trailing)</code> on
+    <em>one</em> cell re-answers the horizontal question for the entire column — the same
+    publish-a-guide idea as <code>.alignmentGuide</code>, scoped to a column. And
+    <code>.leadingFirstTextBaseline</code> is a composite you've already met: the leading
+    guide horizontally, the first-baseline guide vertically, so labels of different font
+    sizes still sit on a shared baseline per row.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">.alignmentGuide(_:computeValue:)</span>
+  <h2>Overriding the answer</h2>
+  <p>
+    <code>.alignmentGuide</code> lets one view give a <em>different</em> answer to the container's
+    question. You name the alignment being asked about, and return a new offset computed
+    from the view's <code>ViewDimensions</code> — which also hands you the view's existing guides,
+    so answers can be relative: <code>d[.top]</code>, <code>d[VerticalAlignment.center]</code>, <code>d.height</code>.
+  </p>
+
+<pre><code><span class="ty">HStack</span>(alignment: <span class="kw">.center</span>) {
+    <span class="ty">Image</span>(<span class="st">"badge"</span>)
+        <span class="cm">// this view's ".center" is now 10 pt above its real center,</span>
+        <span class="cm">// so the container pushes the view 10 pt *down* to compensate</span>
+        .<span class="kw">alignmentGuide</span>(<span class="kw">VerticalAlignment.center</span>) { d <span class="kw">in</span>
+            d[<span class="kw">VerticalAlignment.center</span>] - <span class="nm">10</span>
+        }
+    <span class="ty">Text</span>(<span class="st">"Neighbors keep their defaults"</span>)
+}</code></pre>
+
+  <figure role="img" aria-label="Two views on a shared center guide; the first view's guide is overridden, shifting the view down relative to the line.">
+    <svg viewBox="0 0 640 190" width="640" height="190" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <line x1="20" y1="90" x2="620" y2="90" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <text x="24" y="80" fill="#ff7a59">shared .center guide</text>
+      <!-- default view -->
+      <rect x="120" y="55" width="120" height="70" rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="132" y="146" fill="#9aa0ab">default: d[.center]</text>
+      <!-- overridden view: guide is center-10, so box shifts down 10 -->
+      <rect x="330" y="65" width="120" height="70" rx="8" fill="rgba(111,211,231,.16)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <path d="M 456 90 v 10" stroke="#ff7a59" stroke-width="2"/>
+      <path d="M 452 96 l 4 8 l 4 -8 z" fill="#ff7a59"/>
+      <text x="466" y="104" fill="#ff7a59">−10 → view slides +10</text>
+      <text x="342" y="156" fill="#9aa0ab">overridden: d[.center] − 10</text>
+    </svg>
+    <figcaption>
+      Mind the inversion: reporting a guide <em>higher up</em> in the view (a smaller number)
+      makes the container move the view <em>down</em> to bring that point to the line.
+      Values may be negative or beyond the view's bounds — deliberate overhang is legal.
+    </figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="t">The classic no-op</span>
+    An override only fires for the alignment the container is <em>actually using</em>.
+    Overriding <code>.leading</code> inside <code>VStack(alignment: .center)</code> changes nothing —
+    nobody asked that question. Match the guide you override to the container's
+    <code>alignment:</code> parameter.
+  </div>
+
+  <h3>Deliberate overhang</h3>
+  <p>
+    Because a guide may point <em>outside</em> the view's bounds, overrides are also how you
+    hang a badge half off a card's corner — no <code>offset</code> math, and it stays put as
+    either view resizes:
+  </p>
+
+<pre><code><span class="ty">ZStack</span>(alignment: <span class="kw">.topTrailing</span>) {
+    <span class="ty">CardView</span>()
+    <span class="ty">BadgeView</span>()
+        <span class="cm">// the badge's ".top" is its vertical center, and its</span>
+        <span class="cm">// ".trailing" is its horizontal center → it straddles the corner</span>
+        .<span class="kw">alignmentGuide</span>(<span class="kw">.top</span>)      { d <span class="kw">in</span> d.height / <span class="nm">2</span> }
+        .<span class="kw">alignmentGuide</span>(<span class="kw">.trailing</span>) { d <span class="kw">in</span> d.width  / <span class="nm">2</span> }
+}</code></pre>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">AlignmentID</span>
+  <h2>Custom guides: aligning across containers</h2>
+  <p>
+    Built-in guides only line up siblings in the same stack. To align views that live in
+    <em>different</em> branches of the hierarchy — say, the values column of two separate rows —
+    define your own alignment. A custom guide propagates upward: a container's answer for it
+    is derived from whichever children explicitly set it, so the outer stack can line up
+    grandchildren.
+  </p>
+
+<pre><code><span class="kw">extension</span> <span class="ty">HorizontalAlignment</span> {
+    <span class="kw">private struct</span> <span class="ty">ValueColumn</span>: <span class="ty">AlignmentID</span> {
+        <span class="kw">static func</span> defaultValue(in d: <span class="ty">ViewDimensions</span>) -&gt; <span class="ty">CGFloat</span> { d[<span class="kw">.leading</span>] }
+    }
+    <span class="kw">static let</span> valueColumn = <span class="ty">HorizontalAlignment</span>(<span class="ty">ValueColumn</span>.<span class="kw">self</span>)
+}
+
+<span class="ty">VStack</span>(alignment: <span class="kw">.valueColumn</span>) {
+    <span class="ty">HStack</span> { <span class="ty">Text</span>(<span class="st">"Version"</span>);  <span class="ty">Text</span>(<span class="st">"2.4.1"</span>).<span class="kw">alignmentGuide</span>(<span class="kw">.valueColumn</span>) { $0[<span class="kw">.leading</span>] } }
+    <span class="ty">HStack</span> { <span class="ty">Text</span>(<span class="st">"Size"</span>);     <span class="ty">Text</span>(<span class="st">"12 MB"</span>).<span class="kw">alignmentGuide</span>(<span class="kw">.valueColumn</span>) { $0[<span class="kw">.leading</span>] } }
+}</code></pre>
+
+  <p>
+    The two value labels line up even though each lives inside its own <code>HStack</code> —
+    the guide value bubbles up through the rows to the outer <code>VStack</code>, which
+    does the aligning. Two things make custom guides tick: the <code>defaultValue</code> is the
+    answer for any view that <em>doesn't</em> set the guide explicitly, and a container adopts
+    the explicit value published by its children — which is what lets a guide cross
+    container boundaries. Give exactly one view per branch the explicit value and the
+    behavior stays predictable.
+  </p>
+
+  <h3>Icon on the title line</h3>
+  <p>
+    The everyday version of the same trick: an icon next to a title + subtitle block.
+    Center the icon against the whole <code>VStack</code> and it slides downward every time the
+    subtitle wraps to another line. Align it to the <em>title's</em> center instead:
+  </p>
+
+<pre><code><span class="kw">extension</span> <span class="ty">VerticalAlignment</span> {
+    <span class="kw">private struct</span> <span class="ty">TitleCenter</span>: <span class="ty">AlignmentID</span> {
+        <span class="kw">static func</span> defaultValue(in d: <span class="ty">ViewDimensions</span>) -&gt; <span class="ty">CGFloat</span> {
+            d[<span class="kw">VerticalAlignment.center</span>]
+        }
+    }
+    <span class="kw">static let</span> titleCenter = <span class="ty">VerticalAlignment</span>(<span class="ty">TitleCenter</span>.<span class="kw">self</span>)
+}
+
+<span class="ty">HStack</span>(alignment: <span class="kw">.titleCenter</span>) {
+    <span class="ty">Image</span>(systemName: <span class="st">"bell.badge"</span>)
+        .<span class="kw">alignmentGuide</span>(<span class="kw">.titleCenter</span>) { $0[<span class="kw">VerticalAlignment.center</span>] }
+    <span class="ty">VStack</span>(alignment: <span class="kw">.leading</span>) {
+        <span class="ty">Text</span>(<span class="st">"Weekly digest"</span>).font(<span class="kw">.headline</span>)
+            .<span class="kw">alignmentGuide</span>(<span class="kw">.titleCenter</span>) { $0[<span class="kw">VerticalAlignment.center</span>] }
+        <span class="ty">Text</span>(<span class="st">"A summary of everything that happened, however long it wraps."</span>)
+            .foregroundStyle(<span class="kw">.secondary</span>)
+    }
+}</code></pre>
+
+  <figure role="img" aria-label="An icon aligned to the vertical center of a title line, staying put while the subtitle below the title wraps to more lines.">
+    <svg viewBox="0 0 640 180" width="640" height="180" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- centered-on-block version -->
+      <text x="20" y="18" fill="#9aa0ab">.center — icon sinks as the subtitle grows</text>
+      <line x1="14" y1="86" x2="300" y2="86" stroke="#7b828d" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <rect x="24" y="72" width="28" height="28" rx="7" fill="rgba(111,211,231,.16)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="66" y="48" fill="#eceef1" font-size="13">Weekly digest</text>
+      <text x="66" y="70" fill="#9aa0ab" font-size="12">A summary of everything</text>
+      <text x="66" y="88" fill="#9aa0ab" font-size="12">that happened, however</text>
+      <text x="66" y="106" fill="#9aa0ab" font-size="12">long it wraps.</text>
+
+      <!-- titleCenter version -->
+      <text x="352" y="18" fill="#9aa0ab">.titleCenter — icon stays with the title</text>
+      <line x1="344" y1="44" x2="630" y2="44" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <rect x="354" y="30" width="28" height="28" rx="7" fill="rgba(111,211,231,.16)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="396" y="48" fill="#eceef1" font-size="13">Weekly digest</text>
+      <text x="396" y="70" fill="#9aa0ab" font-size="12">A summary of everything</text>
+      <text x="396" y="88" fill="#9aa0ab" font-size="12">that happened, however</text>
+      <text x="396" y="106" fill="#9aa0ab" font-size="12">long it wraps.</text>
+    </svg>
+    <figcaption>
+      The icon publishes its center, the title publishes <em>its</em> center, and the
+      <code>HStack</code> joins those two lines — the subtitle's height stops mattering.
+    </figcaption>
+  </figure>
+
+  <h3>A timeline spine</h3>
+  <p>
+    Custom guides scale up: a timeline needs each row's dot centered on the heading of
+    that row's content, while the dots also form one straight vertical spine. The same
+    <code>.titleCenter</code> alignment from above, reused in every row, handles the
+    dot-to-heading match; the dots' fixed width handles the spine — no
+    <code>GeometryReader</code>, no manual offsets:
+  </p>
+
+<pre><code><span class="ty">ForEach</span>(events) { event <span class="kw">in</span>
+    <span class="ty">HStack</span>(alignment: <span class="kw">.titleCenter</span>, spacing: <span class="nm">12</span>) {
+        <span class="ty">Circle</span>().frame(width: <span class="nm">10</span>, height: <span class="nm">10</span>)
+            .<span class="kw">alignmentGuide</span>(<span class="kw">.titleCenter</span>) { $0[<span class="kw">VerticalAlignment.center</span>] }
+        <span class="ty">VStack</span>(alignment: <span class="kw">.leading</span>) {
+            <span class="ty">Text</span>(event.title).font(<span class="kw">.headline</span>)
+                .<span class="kw">alignmentGuide</span>(<span class="kw">.titleCenter</span>) { $0[<span class="kw">VerticalAlignment.center</span>] }
+            <span class="ty">Text</span>(event.details)
+        }
+    }
+}</code></pre>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">Anchor&lt;CGRect&gt; · anchorPreference</span>
+  <h2>Anchors: geometry across the whole tree</h2>
+  <p>
+    Guides — even custom ones — coordinate views that share an aligning ancestor. But some
+    layouts need one view to know <em>another view's actual geometry</em>: an underline that
+    slides beneath the selected tab, a connector drawn between two cards. That's the
+    anchor system, and it's genuinely the hardest idea on this page — so let's build it
+    from its two ingredients: why raw coordinates can't work, and what an anchor does
+    about it.
+  </p>
+
+  <h3>1 · Geometry is meaningless without a coordinate space</h3>
+  <p>
+    “Where is this view?” has no answer by itself — only “where is it <em>as seen
+    from…</em>”. The same box is at one position in the window's coordinates, another in
+    its card's, another in a scroll view's content space (and that one changes every
+    frame while scrolling):
+  </p>
+
+  <figure role="img" aria-label="One view shown with two different coordinate readings: a large offset measured from the window's origin and a small offset measured from its enclosing card's origin.">
+    <svg viewBox="0 0 640 200" width="640" height="200" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- window -->
+      <rect x="16" y="16" width="608" height="168" rx="10" fill="none" stroke="#3a3f47" stroke-width="1.2"/>
+      <text x="26" y="34" fill="#9aa0ab">window origin ✛</text>
+      <!-- card -->
+      <rect x="330" y="64" width="250" height="96" rx="10" fill="none" stroke="#9aa0ab" stroke-width="1.2"/>
+      <text x="340" y="82" fill="#9aa0ab">card origin ✛</text>
+      <!-- the view -->
+      <rect x="410" y="98" width="110" height="40" rx="8" fill="rgba(111,211,231,.12)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <!-- window measurement -->
+      <path d="M 24 24 L 406 96" stroke="#ff7a59" stroke-width="1.2" stroke-dasharray="5 4"/>
+      <text x="130" y="66" fill="#ff7a59">(394, 82) from the window</text>
+      <!-- card measurement -->
+      <path d="M 338 72 L 406 96" stroke="#ff7a59" stroke-width="1.2" stroke-dasharray="5 4"/>
+      <text x="336" y="182" fill="#ff7a59">(80, 34) from the card</text>
+    </svg>
+    <figcaption>
+      One <span class="v">view</span>, several true positions — every number is relative to
+      somebody's origin. Any API that hands you a bare rect has silently chosen one.
+    </figcaption>
+  </figure>
+
+  <p>
+    The manual route is <code>GeometryReader</code> with <code>.global</code> or named coordinate
+    spaces — read a frame, store it in <code>@State</code>, use it elsewhere. It works, but you
+    own the bookkeeping: pick the right space, convert between spaces yourself, and accept
+    that measure-into-state triggers another layout pass (hello, stale-frame glitches and
+    update loops).
+  </p>
+
+  <h3>2 · An anchor is a claim ticket, not a rectangle</h3>
+  <p>
+    An <code>Anchor&lt;CGRect&gt;</code> contains <strong>no usable numbers</strong>. It's an opaque
+    token meaning “the bounds of <em>that specific view</em>” — with the coordinate-space
+    question deliberately left open. The numbers only materialize when someone
+    <em>resolves</em> the token through a <code>GeometryProxy</code>:
+  </p>
+
+<pre><code><span class="kw">let</span> rect: <span class="ty">CGRect</span> = proxy[anchor]
+<span class="cm">// “that view's bounds, expressed in MY coordinate space” —</span>
+<span class="cm">// whoever resolves gets answers relative to themselves.</span></code></pre>
+
+  <p>
+    That deferred resolution is the entire trick. The capturing view doesn't decide the
+    space; the <em>consumer</em> does, implicitly, just by being the one to resolve. No
+    conversions, no named spaces, and it stays correct through scrolling and transforms
+    because resolution happens fresh each layout.
+  </p>
+
+  <table>
+    <thead><tr><th>capture (<code>Anchor.Source</code>)</th><th>token type</th><th>resolves to</th></tr></thead>
+    <tbody>
+      <tr><td><code>.bounds</code></td><td><code>Anchor&lt;CGRect&gt;</code></td><td>the view's rect, in the resolver's space</td></tr>
+      <tr><td><code>.center</code>, <code>.topLeading</code>, <code>.trailing</code>, …</td><td><code>Anchor&lt;CGPoint&gt;</code></td><td>that point of the view</td></tr>
+      <tr><td><code>.rect(…)</code> / <code>.point(…)</code></td><td>either</td><td>a custom spot in the view's own space</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3 · The pipeline: capture, hoist, resolve</h3>
+  <p>
+    Anchors travel through <strong>preferences</strong> — the system where values flow
+    <em>up</em> the tree, the mirror image of the environment flowing down. Three moves,
+    always the same:
+  </p>
+  <p>
+    <strong>Capture.</strong> <code>.anchorPreference(key:value:transform:)</code> takes which
+    geometry to capture (<code>value: .bounds</code>) and a closure that wraps the fresh token
+    into your key's value type. The cryptic-looking <code>{ [i: $0] }</code> just means “a
+    one-entry dictionary: my index → my anchor.”
+    <strong>Hoist.</strong> A <code>PreferenceKey</code>'s <code>reduce</code> merges the values from
+    every branch as they bubble upward — for a dictionary, a plain merge.
+    <strong>Resolve.</strong> An ancestor reads the collected value with
+    <code>.overlayPreferenceValue</code> (or <code>.backgroundPreferenceValue</code>), which
+    hands it the tokens <em>and</em> hosts the view that consumes them; a
+    <code>GeometryReader</code> inside provides the proxy that turns tokens into rects.
+  </p>
+
+<pre><code><span class="cm">// CAPTURE + HOIST — the key's value is a dictionary of tokens</span>
+<span class="kw">struct</span> <span class="ty">TabAnchors</span>: <span class="ty">PreferenceKey</span> {
+    <span class="kw">static let</span> defaultValue: [<span class="ty">Int</span>: <span class="ty">Anchor</span>&lt;<span class="ty">CGRect</span>&gt;] = [:]
+    <span class="kw">static func</span> reduce(value: <span class="kw">inout</span> [<span class="ty">Int</span>: <span class="ty">Anchor</span>&lt;<span class="ty">CGRect</span>&gt;],
+                       nextValue: () -&gt; [<span class="ty">Int</span>: <span class="ty">Anchor</span>&lt;<span class="ty">CGRect</span>&gt;]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
+<span class="ty">HStack</span>(spacing: <span class="nm">24</span>) {
+    <span class="ty">ForEach</span>(tabs.indices, id: \.<span class="kw">self</span>) { i <span class="kw">in</span>
+        <span class="ty">Text</span>(tabs[i])
+            .<span class="kw">anchorPreference</span>(key: <span class="ty">TabAnchors</span>.<span class="kw">self</span>, value: <span class="kw">.bounds</span>) { [i: $0] }
+            .onTapGesture { withAnimation { selection = i } }
+    }
+}
+<span class="cm">// RESOLVE — an ancestor turns the selected tab's token into an underline</span>
+.<span class="kw">overlayPreferenceValue</span>(<span class="ty">TabAnchors</span>.<span class="kw">self</span>) { anchors <span class="kw">in</span>
+    <span class="ty">GeometryReader</span> { proxy <span class="kw">in</span>
+        <span class="kw">if let</span> anchor = anchors[selection] {
+            <span class="ty">Capsule</span>()
+                .frame(width: proxy[anchor].width, height: <span class="nm">3</span>)
+                .offset(x: proxy[anchor].minX, y: proxy[anchor].maxY + <span class="nm">4</span>)
+        }
+    }
+}</code></pre>
+
+  <figure role="img" aria-label="A row of three tabs; the selected tab publishes its bounds up the view tree, and an overlay resolves that anchor to draw an underline capsule beneath the selected tab.">
+    <svg viewBox="0 0 640 190" width="640" height="190" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- tab row -->
+      <rect x="60" y="46" width="520" height="60" rx="10" fill="none" stroke="#9aa0ab" stroke-width="1.2"/>
+      <text x="110" y="82" fill="#eceef1" font-size="13">Discover</text>
+      <text x="270" y="82" fill="#6fd3e7" font-size="13">Installed</text>
+      <text x="430" y="82" fill="#eceef1" font-size="13">Updates</text>
+      <!-- selected bounds -->
+      <rect x="258" y="58" width="94" height="34" rx="7" fill="rgba(111,211,231,.08)" stroke="#6fd3e7" stroke-width="1.2" stroke-dasharray="3 3"/>
+      <!-- capsule -->
+      <rect x="258" y="100" width="94" height="5" rx="2.5" fill="#ff7a59"/>
+      <!-- preference flow up -->
+      <path d="M 305 58 C 305 20, 520 14, 596 30" stroke="#ff7a59" stroke-width="1.5" fill="none" stroke-dasharray="5 4"/>
+      <path d="M 592 24 l 8 6 l -10 3 z" fill="#ff7a59"/>
+      <text x="368" y="24" fill="#ff7a59">.bounds anchor rises via preference</text>
+      <text x="60" y="150" fill="#9aa0ab">overlayPreferenceValue + proxy[anchor] → underline in the overlay's own coordinates</text>
+      <text x="60" y="170" fill="#9aa0ab">withAnimation { selection = i } → the capsule *slides* between tabs</text>
+    </svg>
+    <figcaption>
+      Guides answer “where inside my container am I?”; an <span class="g">anchor</span>
+      answers “where is that other view, from <em>here</em>?” — any view, any distance
+      up the tree.
+    </figcaption>
+  </figure>
+
+  <h3>Second example: drawing between views</h3>
+  <p>
+    The tab underline resolves one token. Resolve <em>two</em> and you can draw between
+    views that live in completely different branches — a flow-chart connector, an
+    onboarding arrow pointing at a control. No guide, stack, or frame can express “from
+    the edge of this view to the edge of that one”; two anchors and a <code>Path</code> can:
+  </p>
+
+<pre><code><span class="cm">// same PreferenceKey shape as TabAnchors, keyed by name</span>
+<span class="ty">StepCard</span>(<span class="st">"Build"</span>)
+    .<span class="kw">anchorPreference</span>(key: <span class="ty">CardAnchors</span>.<span class="kw">self</span>, value: <span class="kw">.bounds</span>) { [<span class="st">"build"</span>: $0] }
+<span class="cm">// …elsewhere, any distance away in the hierarchy…</span>
+<span class="ty">StepCard</span>(<span class="st">"Deploy"</span>)
+    .<span class="kw">anchorPreference</span>(key: <span class="ty">CardAnchors</span>.<span class="kw">self</span>, value: <span class="kw">.bounds</span>) { [<span class="st">"deploy"</span>: $0] }
+
+<span class="cm">// a shared ancestor connects them — both rects resolve in ITS space,</span>
+<span class="cm">// so the two points are directly comparable</span>
+.<span class="kw">overlayPreferenceValue</span>(<span class="ty">CardAnchors</span>.<span class="kw">self</span>) { anchors <span class="kw">in</span>
+    <span class="ty">GeometryReader</span> { proxy <span class="kw">in</span>
+        <span class="kw">if let</span> from = anchors[<span class="st">"build"</span>], <span class="kw">let</span> to = anchors[<span class="st">"deploy"</span>] {
+            <span class="ty">Path</span> { p <span class="kw">in</span>
+                p.move(to: <span class="ty">CGPoint</span>(x: proxy[from].maxX, y: proxy[from].midY))
+                p.addLine(to: <span class="ty">CGPoint</span>(x: proxy[to].minX,  y: proxy[to].midY))
+            }
+            .stroke(.secondary, style: .<span class="kw">init</span>(lineWidth: <span class="nm">1.5</span>, dash: [<span class="nm">6</span>, <span class="nm">5</span>]))
+        }
+    }
+    .allowsHitTesting(<span class="kw">false</span>)   <span class="cm">// the overlay must not eat clicks</span>
+}</code></pre>
+
+  <figure role="img" aria-label="Two cards in different parts of a layout joined by a dashed connector line running from the trailing edge of the first to the leading edge of the second.">
+    <svg viewBox="0 0 640 170" width="640" height="170" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <rect x="40" y="36" width="150" height="64" rx="10" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="86" y="72" fill="#eceef1" font-size="13">Build</text>
+      <rect x="440" y="82" width="150" height="64" rx="10" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="478" y="118" fill="#eceef1" font-size="13">Deploy</text>
+      <path d="M 190 68 C 300 68, 340 114, 440 114" stroke="#ff7a59" stroke-width="1.5" fill="none" stroke-dasharray="6 5"/>
+      <circle cx="190" cy="68"  r="3" fill="#ff7a59"/>
+      <circle cx="440" cy="114" r="3" fill="#ff7a59"/>
+      <text x="250" y="52" fill="#ff7a59">proxy[from].maxX → proxy[to].minX</text>
+    </svg>
+    <figcaption>
+      Both tokens resolve in the <em>overlay's</em> coordinate space, so their points can
+      be mixed in one <code>Path</code> — and because resolution re-runs each layout, the
+      line tracks the cards through resizes and scrolling.
+    </figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="t">When to switch systems</span>
+    Reach for guides while views share an aligning parent — cheaper and declarative.
+    Reach for anchors when geometry must cross the tree (indicator under a distant view,
+    lines between views, spotlight cutouts) or when you need the rect itself, not just an
+    offset on one axis. And unlike hand-rolled <code>GeometryReader</code>-into-<code>@State</code>
+    measuring, anchors involve no state round-trip — nothing to go stale, no feedback
+    loops.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">matchedGeometryEffect(id:in:)</span>
+  <h2>Matched geometry: alignment over time</h2>
+  <p>
+    Everything so far aligns views that exist <em>at the same moment</em>.
+    <code>matchedGeometryEffect</code> aligns a view with another view <em>across a state
+    change</em>: give both the same <code>id</code> in the same <code>@Namespace</code>, and when one
+    is removed while the other is inserted, SwiftUI interpolates frame and position
+    between them — the “hero” transition where a thumbnail appears to grow into a detail
+    card.
+  </p>
+
+<pre><code><span class="kw">@Namespace private var</span> hero
+
+<span class="kw">if</span> isExpanded {
+    <span class="ty">CoverDetail</span>()
+        .<span class="kw">matchedGeometryEffect</span>(id: <span class="st">"cover"</span>, in: hero)
+} <span class="kw">else</span> {
+    <span class="ty">CoverThumbnail</span>()
+        .<span class="kw">matchedGeometryEffect</span>(id: <span class="st">"cover"</span>, in: hero)
+}
+<span class="cm">// withAnimation(.spring) { isExpanded.toggle() }</span></code></pre>
+
+  <figure role="img" aria-label="A small thumbnail rectangle and a large detail rectangle with dashed intermediate rectangles between them, showing the geometry interpolating from one to the other.">
+    <svg viewBox="0 0 640 180" width="640" height="180" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <rect x="40" y="110" width="64" height="44" rx="8" fill="rgba(111,211,231,.16)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="40" y="172" fill="#9aa0ab">thumbnail</text>
+      <rect x="150" y="84"  width="120" height="70"  rx="9"  fill="none" stroke="#ff7a59" stroke-width="1.2" stroke-dasharray="4 4" opacity=".55"/>
+      <rect x="300" y="58"  width="180" height="96"  rx="10" fill="none" stroke="#ff7a59" stroke-width="1.2" stroke-dasharray="4 4" opacity=".75"/>
+      <rect x="430" y="26" width="190" height="128" rx="12" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="430" y="172" fill="#9aa0ab">detail</text>
+      <text x="180" y="36" fill="#ff7a59">same id, same namespace → frames interpolate</text>
+    </svg>
+    <figcaption>
+      Two different views, one geometric identity. The <span class="g">dashed frames</span>
+      are what the system draws in between — no code computes them.
+    </figcaption>
+  </figure>
+
+  <p>
+    Ground rules: exactly <strong>one</strong> view per <code>id</code> should be the geometry
+    source at any instant (two live sources produce console warnings and jumps — with two
+    simultaneous views, mark one <code>isSource: false</code>); the effect matches
+    <em>geometry</em>, not content, so pair it with a matching visual crossfade; and it
+    works within one window's view tree — for whole-screen transitions on modern OSes,
+    <code>navigationTransition(.zoom)</code> builds on the same idea.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">Layout · sizeThatFits · placeSubviews</span>
+  <h2>The Layout protocol: becoming the container</h2>
+  <p>
+    When no stack fits — tags that flow onto new rows, views on a circle — you can be the
+    container. A <code>Layout</code> implements the two sides of the negotiation this page
+    started with: report a size (<code>sizeThatFits</code>), then place each child
+    (<code>placeSubviews</code>). The parent proposes; you dispose.
+  </p>
+
+  <h3>The conversation</h3>
+  <p>
+    Layout in SwiftUI is a structured dialogue, and writing a <code>Layout</code> means
+    playing the middle role. Your parent proposes a size; you interrogate your subviews
+    with proposals of your own; they answer with sizes; you answer your parent; and once
+    the parent settles your bounds, you place each child.
+  </p>
+
+  <figure role="img" aria-label="Sequence diagram of the layout negotiation: the parent proposes a size to the layout, the layout probes each subview, subviews report sizes, the layout reports its size to the parent, and finally the parent hands the layout its bounds to place subviews in.">
+    <svg viewBox="0 0 640 240" width="640" height="240" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- lifelines -->
+      <text x="52"  y="20" fill="#eceef1">Parent</text>
+      <text x="272" y="20" fill="#ff7a59">Your Layout</text>
+      <text x="512" y="20" fill="#6fd3e7">Subviews</text>
+      <line x1="72"  y1="30" x2="72"  y2="222" stroke="#3a3f47" stroke-width="1.2"/>
+      <line x1="308" y1="30" x2="308" y2="222" stroke="#3a3f47" stroke-width="1.2"/>
+      <line x1="540" y1="30" x2="540" y2="222" stroke="#3a3f47" stroke-width="1.2"/>
+      <!-- 1 propose -->
+      <path d="M 76 52 H 300" stroke="#ff7a59" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <path d="M 296 47 l 8 5 l -8 5 z" fill="#ff7a59"/>
+      <text x="90" y="46" fill="#ff7a59">1 · proposes 300 × nil</text>
+      <!-- 2 probe -->
+      <path d="M 312 88 H 532" stroke="#ff7a59" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <path d="M 528 83 l 8 5 l -8 5 z" fill="#ff7a59"/>
+      <text x="322" y="82" fill="#ff7a59">2 · sizeThatFits(.unspecified)…</text>
+      <!-- 3 answer -->
+      <path d="M 536 124 H 316" stroke="#6fd3e7" stroke-width="1.5"/>
+      <path d="M 320 119 l -8 5 l 8 5 z" fill="#6fd3e7"/>
+      <text x="352" y="118" fill="#6fd3e7">3 · ideal sizes come back</text>
+      <!-- 4 report -->
+      <path d="M 304 160 H 80" stroke="#6fd3e7" stroke-width="1.5"/>
+      <path d="M 84 155 l -8 5 l 8 5 z" fill="#6fd3e7"/>
+      <text x="96" y="154" fill="#6fd3e7">4 · sizeThatFits → 300 × 184</text>
+      <!-- 5 place -->
+      <path d="M 76 196 H 300" stroke="#ff7a59" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <path d="M 296 191 l 8 5 l -8 5 z" fill="#ff7a59"/>
+      <text x="90" y="190" fill="#ff7a59">5 · placeSubviews(in: bounds)</text>
+    </svg>
+    <figcaption>
+      Proposals flow one way (<span class="g">orange</span>), sizes flow back
+      (<span class="v">cyan</span>). Nothing is imposed — a child can answer a 300-wide
+      proposal with 420, and dealing with that is the container's problem.
+    </figcaption>
+  </figure>
+
+  <p>
+    A <code>ProposedViewSize</code>'s dimensions carry three special probes, and subviews
+    answer each differently — <code>Text</code> is the classic responder:
+  </p>
+
+  <table>
+    <thead><tr><th>proposal</th><th>means</th><th>Text answers with</th></tr></thead>
+    <tbody>
+      <tr><td><code>nil</code> (<code>.unspecified</code>)</td><td>“what's your ideal?”</td><td>one unwrapped line</td></tr>
+      <tr><td><code>0</code> (<code>.zero</code>)</td><td>“your minimum?”</td><td>tightest legal size</td></tr>
+      <tr><td><code>.infinity</code></td><td>“your maximum?”</td><td>all the room it can use</td></tr>
+      <tr><td>a number</td><td>“fit this”</td><td>wraps into that width</td></tr>
+    </tbody>
+  </table>
+
+  <h3>A complete container in twenty lines</h3>
+  <p>
+    Views on a circle — impossible with stacks, and a full, working <code>Layout</code>:
+  </p>
+
+<pre><code><span class="kw">struct</span> <span class="ty">RadialLayout</span>: <span class="ty">Layout</span> {
+    <span class="kw">func</span> sizeThatFits(proposal: <span class="ty">ProposedViewSize</span>,
+                      subviews: <span class="ty">Subviews</span>, cache: <span class="kw">inout</span> ()) -&gt; <span class="ty">CGSize</span> {
+        <span class="cm">// take whatever we're offered, resolving nil probes to a default</span>
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    <span class="kw">func</span> placeSubviews(in bounds: <span class="ty">CGRect</span>, proposal: <span class="ty">ProposedViewSize</span>,
+                       subviews: <span class="ty">Subviews</span>, cache: <span class="kw">inout</span> ()) {
+        <span class="kw">let</span> radius = <span class="kw">min</span>(bounds.width, bounds.height) / <span class="nm">2</span> - <span class="nm">20</span>
+        <span class="kw">let</span> step = <span class="nm">2</span> * <span class="ty">CGFloat</span>.pi / <span class="ty">CGFloat</span>(subviews.count)
+        <span class="kw">for</span> (index, subview) <span class="kw">in</span> subviews.enumerated() {
+            <span class="kw">let</span> angle = step * <span class="ty">CGFloat</span>(index) - .pi / <span class="nm">2</span>   <span class="cm">// start at 12 o'clock</span>
+            subview.<span class="kw">place</span>(
+                at: <span class="ty">CGPoint</span>(x: bounds.midX + cos(angle) * radius,
+                             y: bounds.midY + sin(angle) * radius),
+                anchor: <span class="kw">.center</span>,
+                proposal: <span class="kw">.unspecified</span>
+            )
+        }
+    }
+}
+
+<span class="ty">RadialLayout</span> { <span class="ty">ForEach</span>(hours) { <span class="ty">HourMark</span>($0) } }   <span class="cm">// drops in like any stack</span></code></pre>
+
+  <figure role="img" aria-label="Eight small views arranged evenly on a dashed circle, each centered on the circle's rim, with the circle's center marked.">
+    <svg viewBox="0 0 640 240" width="640" height="240" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <circle cx="320" cy="120" r="82" fill="none" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="1.5"/>
+      <circle cx="320" cy="120" r="2.5" fill="#ff7a59"/>
+      <text x="332" y="124" fill="#ff7a59">bounds.mid</text>
+      <!-- 8 boxes at 45° steps, anchored center on rim -->
+      <g fill="rgba(111,211,231,.12)" stroke="#6fd3e7" stroke-width="1.5">
+        <rect x="303" y="24"  width="34" height="26" rx="7"/>
+        <rect x="361" y="48"  width="34" height="26" rx="7"/>
+        <rect x="385" y="107" width="34" height="26" rx="7"/>
+        <rect x="361" y="165" width="34" height="26" rx="7"/>
+        <rect x="303" y="189" width="34" height="26" rx="7"/>
+        <rect x="245" y="165" width="34" height="26" rx="7"/>
+        <rect x="221" y="107" width="34" height="26" rx="7"/>
+        <rect x="245" y="48"  width="34" height="26" rx="7"/>
+      </g>
+      <text x="470" y="60"  fill="#9aa0ab">place(at:anchor:.center)</text>
+      <text x="470" y="78"  fill="#9aa0ab">— the anchor is a UnitPoint:</text>
+      <text x="470" y="96"  fill="#9aa0ab">which point of the CHILD</text>
+      <text x="470" y="114" fill="#9aa0ab">lands on the given position.</text>
+      <text x="470" y="132" fill="#9aa0ab">Alignment's little sibling,</text>
+      <text x="470" y="150" fill="#9aa0ab">one view at a time.</text>
+    </svg>
+    <figcaption>
+      Each child is placed by its <span class="v">center</span> onto the
+      <span class="g">rim</span>. Swap <code>anchor: .center</code> for <code>.bottom</code> and the
+      marks would stand <em>on</em> the circle like clock numerals on a dial.
+    </figcaption>
+  </figure>
+
+  <h3>Wrapping rows: the flow-layout shape</h3>
+  <p>
+    The other canonical custom layout: tag chips that fill a row and wrap to the next,
+    like text. Unlike the radial layout, here the children's own sizes drive everything —
+    probe each child, pack greedily, wrap on overflow:
+  </p>
+
+<pre><code><span class="cm">// Sketch — the row-packing helpers (rows(fitting:), rowHeight) are elided.</span>
+<span class="kw">struct</span> <span class="ty">FlowLayout</span>: <span class="ty">Layout</span> {
+    <span class="kw">var</span> spacing: <span class="ty">CGFloat</span> = <span class="nm">8</span>
+
+    <span class="kw">func</span> sizeThatFits(proposal: <span class="ty">ProposedViewSize</span>,
+                      subviews: <span class="ty">Subviews</span>, cache: <span class="kw">inout</span> ()) -&gt; <span class="ty">CGSize</span> {
+        rows(fitting: proposal.width ?? <span class="kw">.infinity</span>, subviews).size   <span class="g">// ① ②</span>
+    }
+
+    <span class="kw">func</span> placeSubviews(in bounds: <span class="ty">CGRect</span>, proposal: <span class="ty">ProposedViewSize</span>,
+                       subviews: <span class="ty">Subviews</span>, cache: <span class="kw">inout</span> ()) {
+        <span class="kw">var</span> origin = bounds.origin                         <span class="g">// ③</span>
+        <span class="kw">for</span> view <span class="kw">in</span> subviews {
+            <span class="kw">let</span> size = view.sizeThatFits(<span class="kw">.unspecified</span>)     <span class="g">// ④</span>
+            <span class="kw">if</span> origin.x + size.width &gt; bounds.maxX {       <span class="g">// ⑤</span>
+                origin.x = bounds.minX
+                origin.y += rowHeight + spacing
+            }
+            view.<span class="kw">place</span>(at: origin, proposal: <span class="kw">.unspecified</span>)  <span class="g">// ⑥</span>
+            origin.x += size.width + spacing
+        }
+    }
+}
+
+<span class="ty">FlowLayout</span> { <span class="ty">ForEach</span>(tags) { <span class="ty">TagChip</span>($0) } }   <span class="cm">// drops in like any stack</span></code></pre>
+
+  <p>
+    <span class="g">①</span> <code>proposal.width</code> is the parent's offer, and it's optional —
+    <code>nil</code> is the “what's your ideal size?” probe from the table above. Falling back
+    to <code>.infinity</code> says “unconstrained, I'm a single unwrapped row.”
+  </p>
+  <p>
+    <span class="g">②</span> The elided <code>rows(fitting:)</code> helper is the real heart of a
+    flow layout: it <em>simulates</em> the packing (measure each chip, start a new row when
+    one won't fit) and reports the total footprint — widest row × summed row heights.
+    The contract that keeps the layout honest: this simulation must reach exactly the
+    same conclusions <code>placeSubviews</code> later acts on, or the container's frame won't
+    match its contents and children draw outside it.
+  </p>
+  <p>
+    <span class="g">③</span> <code>bounds</code> is a <code>CGRect</code>, not a size — its origin is
+    <strong>not</strong> <code>(0,0)</code>. The cursor starts at <code>bounds.origin</code> and wraps
+    back to <code>bounds.minX</code>, never to zero; forgetting this is the classic
+    first-custom-layout bug.
+  </p>
+  <p>
+    <span class="g">④</span> Each chip is asked its <em>ideal</em> size — for a tag chip, its
+    text plus padding on one line.
+  </p>
+  <p>
+    <span class="g">⑤</span> The carriage return: if the chip's right edge would poke past
+    <code>bounds.maxX</code>, reset x to the leading edge and step y down one row.
+  </p>
+  <p>
+    <span class="g">⑥</span> <code>place</code> does two jobs: <code>at: origin</code> pins the chip's
+    top-leading corner to the cursor (the default <code>anchor:</code> — the radial layout
+    passed <code>.center</code> instead), and <code>proposal: .unspecified</code> makes the chip
+    render at the same ideal size step ④ measured. Measuring with one proposal and
+    placing with another is the other classic mismatch bug.
+  </p>
+  <p>
+    One honest simplification in the sketch: the loop steps down by a flat
+    <code>rowHeight</code>, which assumes every chip is the same height — true for tag chips.
+    A general flow layout can't know how far to step down until it has seen the
+    <em>tallest member of the whole row</em>, which is exactly why the real implementation
+    needs the <code>rows(fitting:)</code> pre-pass to group children into rows first — and,
+    since that pre-pass runs in both methods, it's where the <code>cache</code> from the
+    performance note below earns its keep.
+  </p>
+
+  <h3>Aligning inside your own container</h3>
+  <p>
+    Here's the tie-back to everything above: the guide values this whole page is about
+    are <em>literally your inputs</em>. Each subview hands you a <code>ViewDimensions</code> —
+    the same object an <code>.alignmentGuide</code> closure receives, custom alignments
+    included. So a row that aligns children by baseline, the way
+    <code>HStack(alignment: .firstTextBaseline)</code> does, is a dozen lines — you're
+    implementing the right-hand half of the very first diagram:
+  </p>
+
+<pre><code><span class="cm">// inside placeSubviews — a single baseline-aligned row</span>
+<span class="kw">let</span> dims = subviews.map { $0.<span class="kw">dimensions</span>(in: <span class="kw">.unspecified</span>) }
+
+<span class="cm">// the shared line: deepest first-text baseline of any child</span>
+<span class="kw">let</span> lineY = bounds.minY + (dims.map { $0[<span class="kw">.firstTextBaseline</span>] }.max() ?? <span class="nm">0</span>)
+
+<span class="kw">var</span> x = bounds.minX
+<span class="kw">for</span> (subview, d) <span class="kw">in</span> zip(subviews, dims) {
+    <span class="cm">// shift each child so ITS baseline answer lands on the line</span>
+    subview.<span class="kw">place</span>(at: <span class="ty">CGPoint</span>(x: x, y: lineY - d[<span class="kw">.firstTextBaseline</span>]),
+                  proposal: <span class="kw">.unspecified</span>)
+    x += d.width + spacing
+}</code></pre>
+
+  <p>
+    Read it against section one: <code>d[.firstTextBaseline]</code> is each view's
+    <em>answer</em>, <code>lineY</code> is the <em>shared line</em>, and the subtraction is the
+    container shifting each child so the answers meet. That's the entire alignment
+    system, hand-rolled.
+  </p>
+
+  <h3>Letting children speak: LayoutValueKey</h3>
+  <p>
+    Subviews can carry custom per-child values into your layout — the
+    <code>Layout</code>-world analog of publishing a guide. Declare a
+    <code>LayoutValueKey</code>, let views tag themselves, and read the tag off each subview
+    while placing:
+  </p>
+
+<pre><code><span class="kw">private struct</span> <span class="ty">Flexibility</span>: <span class="ty">LayoutValueKey</span> {
+    <span class="kw">static let</span> defaultValue: <span class="ty">CGFloat</span> = <span class="nm">1</span>
+}
+
+<span class="ty">TagChip</span>(tag)
+    .<span class="kw">layoutValue</span>(key: <span class="ty">Flexibility</span>.<span class="kw">self</span>, value: <span class="nm">2</span>)   <span class="cm">// I can stretch 2×</span>
+
+<span class="cm">// inside the layout:</span>
+<span class="kw">let</span> weight = subview[<span class="ty">Flexibility</span>.<span class="kw">self</span>]</code></pre>
+
+  <div class="callout">
+    <span class="t">Performance note</span>
+    The engine may call <code>sizeThatFits</code> several times per pass (those min/ideal/max
+    probes). If sizing is expensive — the flow layout's row packing, say — compute it once
+    into the <code>cache</code> parameter via <code>makeCache(subviews:)</code> and invalidate in
+    <code>updateCache</code>. Skip it until you measure a problem; <code>()</code> is a fine cache.
+  </div>
+
+  <div class="callout">
+    <span class="t">And the circle closes</span>
+    A <code>Layout</code> can also publish guides of its own via
+    <code>explicitAlignment(of:in:proposal:subviews:cache:)</code> — deciding what
+    <em>its</em> answer to “where is your <code>.center</code>?” should be, exactly the
+    question the page opened with. Containers all the way down.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <span class="tick">case study · the drifting form label</span>
+  <h2>Why the form label drifted</h2>
+  <p>
+    Here's how all of this bites in practice. A macOS <code>Form</code> aligns each row's label
+    with its control using <code>.firstTextBaseline</code>. Swap a row's <code>TextField</code> for a
+    tall <code>TextEditor</code> — for multi-line notes, say — and the label sinks toward the
+    bottom of the row. Recall the table from the top: a view with <strong>no text baseline
+    reports its bottom edge</strong>. The form dutifully aligned the label's baseline with the
+    <em>bottom of the editor box</em>.
+  </p>
+
+  <figure role="img" aria-label="A form row where the label aligns to the bottom edge of a tall text editor, then the corrected version where an explicit alignment guide places the label at the first line of text.">
+    <svg viewBox="0 0 640 210" width="640" height="210" font-family="ui-monospace, Menlo, monospace" font-size="11">
+      <!-- broken -->
+      <text x="20" y="18" fill="#9aa0ab">default: baseline = bottom edge</text>
+      <rect x="120" y="34" width="190" height="120" rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="130" y="56" fill="#6fd3e7" font-size="12">What's new…</text>
+      <line x1="14" y1="154" x2="316" y2="154" stroke="#7b828d" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <text x="20" y="150" fill="#eceef1" font-size="13">Summary</text>
+
+      <!-- fixed -->
+      <text x="352" y="18" fill="#9aa0ab">fixed: published guide at first line</text>
+      <rect x="434" y="34" width="190" height="120" rx="8" fill="rgba(111,211,231,.10)" stroke="#6fd3e7" stroke-width="1.5"/>
+      <text x="444" y="56" fill="#6fd3e7" font-size="12">What's new…</text>
+      <line x1="344" y1="58" x2="630" y2="58" stroke="#ff7a59" stroke-dasharray="6 5" stroke-width="2"/>
+      <text x="352" y="54" fill="#eceef1" font-size="13">Summary</text>
+      <text x="344" y="186" fill="#ff7a59">d[.top] + padding + first-line ascent</text>
+    </svg>
+    <figcaption>
+      Left: the form aligns the label with the editor's only “baseline” — its bottom.
+      Right: the editor publishes a synthetic baseline where its first line of text
+      actually sits, and the label snaps level with it.
+    </figcaption>
+  </figure>
+
+<pre><code><span class="ty">TextEditor</span>(text: <span class="nm">$notes</span>)
+    <span class="cm">// TextEditor exposes no first-text baseline, so the form's</span>
+    <span class="cm">// label row has nothing to align the label against and the</span>
+    <span class="cm">// label drifts. Publish one ≈ where the first line's baseline</span>
+    <span class="cm">// actually lands (tune the constant by eye for your padding</span>
+    <span class="cm">// and font).</span>
+    .<span class="kw">alignmentGuide</span>(<span class="kw">.firstTextBaseline</span>) { $0[<span class="kw">.top</span>] + <span class="nm">11</span> }</code></pre>
+
+  <p>
+    One line, and it's the whole mental model in miniature: the container asks a question,
+    the default answer is wrong for this view, so the view is taught a better one.
+  </p>
+</section>
+
+<footer>
+  guide := (ViewDimensions) → CGFloat &nbsp;·&nbsp; a SwiftUI layout field guide, 2026
+</footer>
+
+</div>
+
+<script>
+(function () {
+  const stage    = document.getElementById("stage");
+  const line     = document.getElementById("guideline");
+  const codeEl   = document.getElementById("demoCode");
+  const buttons  = document.querySelectorAll(".demo-controls button");
+  const boxB     = document.getElementById("boxB");
+  const ref      = document.getElementById("baselineRef");
+  const boxes    = [document.getElementById("boxA"), boxB, document.getElementById("boxC")];
+  const PAD_TOP = 40, PAD_BOTTOM = 30;
+
+  const NAMES = {
+    top: ".top", center: ".center", bottom: ".bottom", baseline: ".firstTextBaseline"
+  };
+
+  function layout(mode) {
+    const stageH  = stage.clientHeight;
+    const usable  = stageH - PAD_TOP - PAD_BOTTOM;
+    const heights = boxes.map(b => b.offsetHeight);
+    const tallest = Math.max(...heights);
+
+    boxes.forEach((box, i) => {
+      let top;
+      if (mode === "top")         top = PAD_TOP;
+      else if (mode === "center") top = PAD_TOP + (usable - heights[i]) / 2;
+      else if (mode === "bottom") top = PAD_TOP + usable - heights[i];
+      else { // firstTextBaseline: align each box's first line baseline; boxes share font metrics, so tops match .top here — except we align on the *text*, identical to top for these boxes; emphasize with line position instead
+        top = PAD_TOP;
+      }
+      box.style.marginTop = top + "px";
+    });
+
+    // Place the dashed guide where the shared line is.
+    requestAnimationFrame(() => {
+      let y;
+      const stageRect = stage.getBoundingClientRect();
+      if (mode === "top")         y = PAD_TOP;
+      else if (mode === "center") y = PAD_TOP + usable / 2;
+      else if (mode === "bottom") y = PAD_TOP + usable;
+      else {
+        const r = ref.getBoundingClientRect();
+        y = (r.bottom - stageRect.top) - 3; // ≈ first line's baseline
+      }
+      line.style.top = y + "px";
+      line.dataset.label = NAMES[mode];
+    });
+  }
+
+  let current = "top";
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      current = btn.dataset.mode;
+      buttons.forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+      codeEl.innerHTML = 'HStack(alignment: <span class="g">' + NAMES[current] + "</span>) { … }";
+      layout(current);
+    });
+  });
+  window.addEventListener("resize", () => layout(current));
+  layout(current);
+})();
+</script>
+
+</body>
+</html>

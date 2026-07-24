@@ -1,5 +1,12 @@
 [
   {
+    "title": "SwiftUI Alignment & Alignment Guides",
+    "path": "docs/swiftui-alignment.html",
+    "description": "How alignment actually works in SwiftUI — guides as numbers, stacks vs. frames, leading vs. left, baselines, grids, custom guides, anchors, matchedGeometryEffect, and the Layout protocol.",
+    "tags": ["swiftui", "layout", "ios"],
+    "updated": "2026-07-24"
+  },
+  {
     "title": "Example Guide",
     "path": "docs/example-guide.html",
     "description": "A starter template showing the structure and style guides in this repo follow.",
